@@ -1,0 +1,656 @@
+"""
+Game Cog - Chứa tất cả logic chính của trò chơi nối từ
+"""
+import discord
+from discord.ext import commands
+from discord import app_commands
+import asyncio
+from typing import Optional
+import random
+
+import config
+from utils import embeds, emojis
+from utils.validator import WordValidator
+from database.db_manager import DatabaseManager
+
+
+class GameCog(commands.Cog):
+    def __init__(self, bot: commands.Bot, db: DatabaseManager):
+        self.bot = bot
+        self.db = db
+        self.validators = {}  # Cache validators cho mỗi ngôn ngữ
+        self.active_timeouts = {}  # Track timeout tasks
+        
+    async def cog_load(self):
+        """Load word lists khi cog được load"""
+        await self.load_word_lists()
+    
+    async def load_word_lists(self):
+        """Load danh sách từ cho các ngôn ngữ"""
+        # Tiếng Việt
+        try:
+            with open(config.WORDS_VI_PATH, 'r', encoding='utf-8') as f:
+                words_vi = [line.strip() for line in f if line.strip()]
+            self.validators['vi'] = WordValidator('vi', words_vi)
+            print(f"✅ Loaded {len(words_vi)} Vietnamese words")
+        except Exception as e:
+            print(f"❌ Error loading Vietnamese words: {e}")
+        
+        # Tiếng Anh
+        try:
+            with open(config.WORDS_EN_PATH, 'r', encoding='utf-8') as f:
+                words_en = [line.strip() for line in f if line.strip()]
+            self.validators['en'] = WordValidator('en', words_en)
+            print(f"✅ Loaded {len(words_en)} English words")
+        except Exception as e:
+            print(f"❌ Error loading English words: {e}")
+    
+    def get_random_word(self, language: str) -> str:
+        """Lấy từ ngẫu nhiên để bắt đầu game"""
+        validator = self.validators.get(language)
+        if validator:
+            return random.choice(list(validator.word_list))
+        return "start" if language == "en" else "bat dau"
+    
+    @app_commands.command(name="start-wordchain", description="🎮 Bắt đầu trò chơi nối từ!")
+    @app_commands.describe(
+        language="Chọn ngôn ngữ: vi (Tiếng Việt) hoặc en (English)"
+    )
+    @app_commands.choices(language=[
+        app_commands.Choice(name="🇻🇳 Tiếng Việt", value="vi"),
+        app_commands.Choice(name="🇬🇧 English", value="en")
+    ])
+    async def start_wordchain(
+        self, 
+        interaction: discord.Interaction,
+        language: app_commands.Choice[str] = None
+    ):
+        """Bắt đầu game với Button UI"""
+        lang = language.value if language else config.DEFAULT_LANGUAGE
+        
+        if await self.db.is_game_active(interaction.channel_id):
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Đã có game đang chơi!",
+                ephemeral=True
+            )
+            return
+        
+        if lang not in self.validators:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Ngôn ngữ '{lang}' chưa được hỗ trợ!",
+                ephemeral=True
+            )
+            return
+        
+        # ===== BUTTON UI REGISTRATION =====
+        from utils.views import RegistrationView
+        
+        lang_flag = "🇻🇳" if lang == "vi" else "🇬🇧"
+        lang_name = "Tiếng Việt" if lang == "vi" else "English"
+        
+        reg_embed = discord.Embed(
+            title=f"{emojis.START} Đăng Ký Tham Gia Game!",
+            description=f"**Ngôn ngữ:** {lang_flag} {lang_name}",
+            color=config.COLOR_INFO
+        )
+        
+        reg_embed.add_field(
+            name="👥 Đã Đăng Ký (0 người)",
+            value="Chưa có ai",
+            inline=False
+        )
+        
+        reg_embed.add_field(
+            name="📋 Hướng Dẫn",
+            value=(
+                f"• Nhấn **📝 Đăng Ký** để tham gia\n"
+                f"• <@{interaction.user.id}> nhấn **🎮 Bắt Đầu**\n"
+                f"• Mỗi lượt: **{config.TURN_TIMEOUT}s**\n"
+                f"• English: Min **3 chữ cái**"
+            ),
+            inline=False
+        )
+        
+        view = RegistrationView(host_id=interaction.user.id)
+        await interaction.response.send_message(embed=reg_embed, view=view)
+        
+        # Wait for start button
+        await view.wait()
+        
+        if not view.game_started:
+            return
+        
+        registered_players = list(view.registered_players)
+        channel = interaction.channel
+        
+        # ===== GAME START =====
+        is_bot_challenge = len(registered_players) == 1
+        
+        if is_bot_challenge:
+            first_player_id = registered_players[0]
+            players_list = [first_player_id]
+        else:
+            random.shuffle(registered_players)
+            players_list = registered_players
+            first_player_id = players_list[0]
+        
+        first_word = self.get_random_word(lang)
+        
+        await self.db.create_game(
+            channel_id=channel.id,
+            guild_id=interaction.guild_id,
+            language=lang,
+            first_word=first_word,
+            first_player_id=first_player_id,
+            is_bot_challenge=is_bot_challenge
+        )
+        
+        import json
+        import aiosqlite
+        import time
+        async with aiosqlite.connect(config.DATABASE_PATH) as db:
+            await db.execute(
+                "UPDATE game_states SET players = ?, turn_start_time = ? WHERE channel_id = ?",
+                (json.dumps(players_list), time.time(), channel.id)
+            )
+            await db.commit()
+        
+        start_embed = discord.Embed(
+            title=f"{emojis.START} Game Bắt Đầu! {emojis.CELEBRATION}",
+            description=f"**Ngôn ngữ:** {lang_flag} {lang_name}",
+            color=config.COLOR_SUCCESS
+        )
+        
+        start_embed.add_field(
+            name=f"{emojis.SCROLL} Từ Đầu Tiên",
+            value=f"```{first_word.upper()}```",
+            inline=False
+        )
+        
+        if is_bot_challenge:
+            start_embed.add_field(
+                name=f"🎮 Chế Độ",
+                value=f"{emojis.ROBOT} **Bot Đưa Từ - Bạn Nối**",
+                inline=False
+            )
+            start_embed.add_field(
+                name=f"{emojis.TIMEOUT} Lượt Của Bạn",
+                value=f"<@{first_player_id}> - Nối từ: **{first_word.upper()}**\n⏰ {config.TURN_TIMEOUT}s",
+                inline=False
+            )
+        else:
+            order_text = ""
+            for idx, pid in enumerate(players_list, 1):
+                player = interaction.guild.get_member(pid)
+                marker = f"{emojis.FIRE} **→**" if pid == first_player_id else "  "
+                order_text += f"{marker} **{idx}.** {player.mention}\n"
+            
+            start_embed.add_field(
+                name=f"👥 Thứ Tự ({len(players_list)} người)",
+                value=order_text,
+                inline=False
+            )
+            start_embed.add_field(
+                name=f"{emojis.TIMEOUT} Lượt Hiện Tại",
+                value=f"<@{first_player_id}> - ⏰ {config.TURN_TIMEOUT}s",
+                inline=False
+            )
+        
+        await channel.send(embed=start_embed)
+        await self.start_turn_timeout(channel.id, first_player_id)
+
+    
+    @app_commands.command(name="stop-wordchain", description="🛑 Kết thúc game hiện tại")
+    async def stop_wordchain(self, interaction: discord.Interaction):
+        """Kết thúc game"""
+        # Kiểm tra có game không
+        game_state = await self.db.get_game_state(interaction.channel_id)
+        if not game_state:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Không có game nào đang chơi!",
+                ephemeral=True
+            )
+            return
+        
+        # Cancel timeout nếu có
+        if interaction.channel_id in self.active_timeouts:
+            self.active_timeouts[interaction.channel_id].cancel()
+            del self.active_timeouts[interaction.channel_id]
+        
+        # Tìm người thắng (người có nhiều điểm nhất)
+        winner_id = None
+        max_points = -999999
+        
+        for player_id in game_state['players']:
+            points = await self.db.get_player_points(player_id, interaction.guild_id)
+            if points > max_points:
+                max_points = points
+                winner_id = player_id
+        
+        # Lưu lịch sử
+        await self.db.save_game_history(
+            channel_id=interaction.channel_id,
+            guild_id=interaction.guild_id,
+            language=game_state['language'],
+            winner_id=winner_id,
+            total_turns=game_state['turn_count'],
+            total_words=len(game_state['used_words']),
+            started_at=game_state['started_at']
+        )
+        
+        # Xóa game
+        await self.db.delete_game(interaction.channel_id)
+        
+        # Thông báo kết thúc
+        winner_data = {'user_id': winner_id, 'points': max_points} if winner_id else None
+        embed = embeds.create_game_end_embed(
+            winner_data=winner_data,
+            total_turns=game_state['turn_count'],
+            used_words_count=len(game_state['used_words'])
+        )
+        
+        await interaction.response.send_message(embed=embed)
+    
+    @app_commands.command(name="status", description="📊 Xem trạng thái game hiện tại")
+    async def status(self, interaction: discord.Interaction):
+        """Hiển thị trạng thái game"""
+        game_state = await self.db.get_game_state(interaction.channel_id)
+        
+        if not game_state:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Không có game nào đang chơi!",
+                ephemeral=True
+            )
+            return
+        
+        # Tạo embed status
+        status_data = {
+            'current_word': game_state['current_word'],
+            'current_player': game_state['current_player_id'],
+            'words_used': len(game_state['used_words']),
+            'turn_count': game_state['turn_count']
+        }
+        
+        embed = embeds.create_status_embed(status_data)
+        await interaction.response.send_message(embed=embed)
+    
+    @app_commands.command(name="hint", description="💡 Nhận gợi ý (tốn 10 điểm)")
+    async def hint(self, interaction: discord.Interaction):
+        """Gợi ý chữ cái tiếp theo"""
+        game_state = await self.db.get_game_state(interaction.channel_id)
+        
+        if not game_state:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Không có game nào đang chơi!",
+                ephemeral=True
+            )
+            return
+        
+        # Kiểm tra điểm
+        points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
+        if points < config.HINT_COST:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Bạn không đủ điểm! Cần {config.HINT_COST} điểm, bạn chỉ có {points} điểm.",
+                ephemeral=True
+            )
+            return
+        
+        # Trừ điểm
+        await self.db.add_points(interaction.user.id, interaction.guild_id, -config.HINT_COST)
+        
+        # Lấy gợi ý
+        validator = self.validators[game_state['language']]
+        hint_char = validator.suggest_next_char(game_state['current_word'])
+        
+        # Gửi gợi ý
+        embed = embeds.create_hint_embed(hint_char, config.HINT_COST)
+        await interaction.response.send_message(embed=embed, ephemeral=True)
+    
+    @app_commands.command(name="pass", description="⏭️ Bỏ lượt (tốn 20 điểm)")
+    async def pass_turn(self, interaction: discord.Interaction):
+        """Bỏ lượt không bị trừ điểm timeout"""
+        game_state = await self.db.get_game_state(interaction.channel_id)
+        
+        if not game_state:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Không có game nào đang chơi!",
+                ephemeral=True
+            )
+            return
+        
+        # Kiểm tra có phải lượt của người này không
+        if game_state['current_player_id'] != interaction.user.id:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Không phải lượt của bạn!",
+                ephemeral=True
+            )
+            return
+        
+        # Kiểm tra điểm
+        points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
+        if points < config.PASS_COST:
+            await interaction.response.send_message(
+                f"{emojis.WRONG} Bạn không đủ điểm! Cần {config.PASS_COST} điểm, bạn chỉ có {points} điểm.",
+                ephemeral=True
+            )
+            return
+        
+        # Trừ điểm
+        await self.db.add_points(interaction.user.id, interaction.guild_id, -config.PASS_COST)
+        
+        # Chuyển lượt (giữ nguyên từ hiện tại)
+        # Tìm người chơi tiếp theo (không phải bot challenge)
+        next_player = self.get_next_player(game_state, interaction.user.id)
+        
+        # Cancel timeout cũ
+        if interaction.channel_id in self.active_timeouts:
+            self.active_timeouts[interaction.channel_id].cancel()
+        
+        # Cập nhật database
+        await self.db.update_game_turn(
+            channel_id=interaction.channel_id,
+            new_word=game_state['current_word'],  # Giữ nguyên từ
+            next_player_id=next_player.id
+        )
+        
+        # Thông báo
+        await interaction.response.send_message(
+            f"{emojis.PASS} {interaction.user.mention} đã bỏ lượt! (-{config.PASS_COST} điểm)\n"
+            f"Lượt tiếp theo: {next_player.mention}"
+        )
+        
+        # Bắt đầu timeout mới
+        await self.start_turn_timeout(interaction.channel_id, next_player.id)
+    
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        """Lắng nghe tin nhắn để check từ nối"""
+        # Bỏ qua tin nhắn của bot
+        if message.author.bot:
+            return
+        
+        # Kiểm tra có game không
+        game_state = await self.db.get_game_state(message.channel.id)
+        if not game_state:
+            return
+        
+        # Kiểm tra có phải lượt của người này không
+        if game_state['current_player_id'] != message.author.id:
+            return
+        
+        # Lấy từ người dùng gửi
+        word = message.content.strip().lower()
+        
+        # Validate từ
+        validator = self.validators[game_state['language']]
+        
+        # [V2] Min length validation (English)
+        if game_state['language'] == 'en' and len(word) < config.MIN_WORD_LENGTH_EN:
+            embed = discord.Embed(
+                title=f"{emojis.WRONG} Từ Quá Ngắn!",
+                description=f"Từ tiếng Anh phải có ít nhất **{config.MIN_WORD_LENGTH_EN} chữ cái**!",
+                color=config.COLOR_ERROR
+            )
+            await message.channel.send(embed=embed)
+            await self.db.add_points(message.author.id, message.guild.id, config.POINTS_WRONG)
+            return
+
+        # Kiểm tra từ đã dùng chưa
+        if word in game_state['used_words']:
+            embed = embeds.create_wrong_answer_embed(
+                message.author.mention,
+                word,
+                "Từ này đã được sử dụng rồi!"
+            )
+            await message.channel.send(embed=embed)
+            await self.db.add_points(message.author.id, message.guild.id, config.POINTS_WRONG)
+            await self.db.update_player_stats(message.author.id, message.guild.id, word, False)
+            return
+        
+        # Kiểm tra nối từ đúng không
+        can_chain, reason = await validator.can_chain(game_state['current_word'], word)
+        
+        if not can_chain:
+            # Sai
+            embed = embeds.create_wrong_answer_embed(
+                message.author.mention,
+                word,
+                reason
+            )
+            await message.channel.send(embed=embed)
+            await self.db.add_points(message.author.id, message.guild.id, config.POINTS_WRONG)
+            await self.db.update_player_stats(message.author.id, message.guild.id, word, False)
+            return
+        
+        # ĐÚNG!
+        # Cancel timeout
+        if message.channel.id in self.active_timeouts:
+            self.active_timeouts[message.channel.id].cancel()
+        
+        # [V2] Calculate points with Time Bonus
+        import time
+        points = config.POINTS_CORRECT
+        bonus_list = []
+        
+        # Time Bonus
+        turn_start = game_state.get('turn_start_time', 0)
+        if turn_start > 0:
+            elapsed = time.time() - turn_start
+            if elapsed < 10:
+                points += config.POINTS_FAST_REPLY
+                bonus_list.append(f"⚡ Siêu tốc! (+{config.POINTS_FAST_REPLY})")
+            elif elapsed < 20:
+                points += config.POINTS_MEDIUM_REPLY
+                bonus_list.append(f"🏃 Nhanh! (+{config.POINTS_MEDIUM_REPLY})")
+        
+        # Word Length/Advanced Bonus
+        word_info = None
+        is_advanced = False
+        
+        if game_state['language'] == 'en':
+            # Check length bonus
+            if len(word) >= config.LONG_WORD_THRESHOLD:
+                # Check dictionary for advanced status
+                word_info = await validator.cambridge_api.get_word_info(word, 'en')
+                if word_info and word_info.get('is_advanced'):
+                    points += config.POINTS_ADVANCED_WORD
+                    bonus_list.append(f"📚 Từ cao cấp! (+{config.POINTS_ADVANCED_WORD})")
+                    is_advanced = True
+                else:
+                    # Just long word
+                    points += config.POINTS_LONG_WORD
+                    bonus_list.append(f"📝 Từ dài! (+{config.POINTS_LONG_WORD})")
+        elif validator.is_long_word(word):
+            points += config.POINTS_LONG_WORD
+            bonus_list.append(f"{emojis.FIRE} Từ dài! (+{config.POINTS_LONG_WORD})")
+            
+        bonus_reason = "\n".join(bonus_list)
+        
+        # Cập nhật điểm và stats
+        await self.db.add_points(message.author.id, message.guild.id, points)
+        await self.db.update_player_stats(message.author.id, message.guild.id, word, True)
+        
+        # Tìm người chơi tiếp theo
+        next_player = self.get_next_player(game_state, message.author.id)
+        
+        # Cập nhật game state
+        await self.db.update_game_turn(
+            channel_id=message.channel.id,
+            new_word=word,
+            next_player_id=next_player.id
+        )
+        
+        # Gửi thông báo
+        embed = embeds.create_correct_answer_embed(
+            message.author.mention,
+            word,
+            points,
+            bonus_reason
+        )
+        
+        # [V2] Add Word Info
+        if word_info:
+            if word_info.get('phonetic'):
+                embed.add_field(name="🔊 Phiên âm", value=f"/{word_info['phonetic']}/", inline=True)
+            if word_info.get('definition'):
+                embed.add_field(name="📖 Nghĩa", value=word_info['definition'], inline=False)
+
+        await message.channel.send(embed=embed)
+        
+        # Check if bot challenge (solo mode)
+        if game_state['is_bot_challenge']:
+            # Bot mode: Bot đưa từ mới ngay lập tức
+            await asyncio.sleep(1.5)  # Small delay for realism
+            
+            # Bot picks next word
+            validator = self.validators[game_state['language']]
+            next_char = validator.get_last_char(word)
+            bot_word = validator.get_bot_word(next_char, set(game_state['used_words']))
+            
+            if not bot_word:
+                # Bot cannot find word - Player wins!
+                win_embed = discord.Embed(
+                    title=f"{emojis.CELEBRATION} Bạn Thắng!",
+                    description=f"{emojis.ROBOT} Bot không tìm được từ nào tiếp theo!\n\n🏆 Chúc mừng!",
+                    color=config.COLOR_GOLD
+                )
+                await message.channel.send(embed=win_embed)
+                await self.db.delete_game(message.channel.id)
+                return
+            
+            # Update game với từ mới của bot
+            await self.db.update_game_turn(
+                channel_id=message.channel.id,
+                new_word=bot_word,
+                next_player_id=message.author.id  # Back to player
+            )
+            
+            # Bot announces new word
+            bot_embed = discord.Embed(
+                title=f"{emojis.ROBOT} Bot Đưa Từ Mới",
+                description=f"```{bot_word.upper()}```",
+                color=config.COLOR_INFO
+            )
+            bot_embed.add_field(
+                name=f"⏰ Lượt Của Bạn",
+                value=f"{message.author.mention} - Hãy nối từ!\n**{config.TURN_TIMEOUT}s** để suy nghĩ",
+                inline=False
+            )
+            await message.channel.send(embed=bot_embed)
+            
+            # Start timeout for player's next turn
+            await self.start_turn_timeout(message.channel.id, message.author.id)
+        else:
+            # Multi-player mode: Normal turn rotation
+            next_player = self.get_next_player(game_state, message.author.id)
+            
+            # Update game state
+            await self.db.update_game_turn(
+                channel_id=message.channel.id,
+                new_word=word,
+                next_player_id=next_player.id
+            )
+            
+            # Start timeout cho người chơi tiếp
+            await self.start_turn_timeout(message.channel.id, next_player.id)
+    
+    def get_next_player(self, game_state: dict, current_user_id: int) -> discord.User:
+        """Lấy người chơi tiếp theo"""
+        players = game_state['players']
+        current_index = players.index(current_user_id)
+        next_index = (current_index + 1) % len(players)
+        next_player_id = players[next_index]
+        
+        # Nếu chỉ có 1 người chơi, trả về chính họ
+        return self.bot.get_user(next_player_id) or self.bot.get_user(current_user_id)
+    
+    async def bot_play_turn(self, channel: discord.TextChannel, game_state: dict, previous_word: str):
+        """Bot tự động chơi (cho bot challenge)"""
+        await asyncio.sleep(2)  # Delay để realistic
+        
+        validator = self.validators[game_state['language']]
+        next_char = validator.get_last_char(previous_word)
+        
+        # Bot chọn từ khó
+        bot_word = validator.get_bot_word(next_char, set(game_state['used_words']))
+        
+        if not bot_word:
+            # Bot không tìm được từ -> người chơi thắng
+            await channel.send(
+                f"{emojis.ROBOT} Bot không tìm được từ nào! {emojis.CELEBRATION} Bạn thắng!"
+            )
+            # Kết thúc game
+            await self.db.delete_game(channel.id)
+            return
+        
+        # Bot gửi từ
+        await channel.send(f"{emojis.ROBOT} Bot: **{bot_word.upper()}**")
+        
+        # Cập nhật game
+        human_player = game_state['players'][0]  # Người chơi là người đầu tiên
+        await self.db.update_game_turn(
+            channel_id=channel.id,
+            new_word=bot_word,
+            next_player_id=human_player
+        )
+        
+        # Bắt đầu timeout cho người chơi
+        await self.start_turn_timeout(channel.id, human_player)
+    
+    async def start_turn_timeout(self, channel_id: int, player_id: int):
+        """Bắt đầu đếm ngược timeout"""
+        # Cancel timeout cũ nếu có
+        if channel_id in self.active_timeouts:
+            self.active_timeouts[channel_id].cancel()
+        
+        # Tạo task mới
+        task = asyncio.create_task(self.timeout_handler(channel_id, player_id))
+        self.active_timeouts[channel_id] = task
+    
+    async def timeout_handler(self, channel_id: int, player_id: int):
+        """Xử lý khi hết thời gian"""
+        try:
+            await asyncio.sleep(config.TURN_TIMEOUT)
+            
+            # Lấy game state
+            game_state = await self.db.get_game_state(channel_id)
+            if not game_state:
+                return
+            
+            # Kiểm tra xem người chơi có đúng là người timeout không
+            if game_state['current_player_id'] != player_id:
+                return  # Đã chuyển lượt rồi
+            
+            # Trừ điểm
+            channel = self.bot.get_channel(channel_id)
+            player = self.bot.get_user(player_id)
+            
+            await self.db.add_points(player_id, game_state['guild_id'], config.POINTS_WRONG)
+            
+            # Gửi thông báo timeout
+            embed = embeds.create_timeout_embed(player.mention)
+            await channel.send(embed=embed)
+            
+            # Chuyển lượt
+            next_player = self.get_next_player(game_state, player_id)
+            await self.db.update_game_turn(
+                channel_id=channel_id,
+                new_word=game_state['current_word'],  # Giữ nguyên từ
+                next_player_id=next_player.id
+            )
+            
+            await channel.send(f"Lượt tiếp theo: {next_player.mention}")
+            
+            # Bắt đầu timeout mới
+            await self.start_turn_timeout(channel_id, next_player.id)
+            
+        except asyncio.CancelledError:
+            # Task bị cancel (người chơi đã trả lời kịp)
+            pass
+
+
+async def setup(bot: commands.Bot):
+    """Setup function cho cog"""
+    db = DatabaseManager(config.DATABASE_PATH)
+    await db.initialize()
+    await bot.add_cog(GameCog(bot, db))
