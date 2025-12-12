@@ -193,19 +193,27 @@ class VuaTiengVietCog(commands.Cog):
             revealed_count = len(game_data.get("revealed_indices", []))
             total_chars = game_data.get("total_chars", 1)
             
+            # Determine Base Points based on length
+            if len(correct_answer) > 25:
+                current_base_points = config.POINTS_VUA_TIENG_VIET * 10 # 50,000
+            elif len(correct_answer) > 15:
+                current_base_points = 10000
+            else:
+                current_base_points = config.POINTS_VUA_TIENG_VIET
+            
             # Formula: Points * (Total - Revealed) / Total
-            # If answer length > 20 chars, multiplier x5
-            multiplier = 5 if len(correct_answer) > 20 else 1
-            calculated_points = int(base_points * (total_chars - revealed_count) / total_chars)
-            points = calculated_points * multiplier
+            points = int(current_base_points * (total_chars - revealed_count) / total_chars)
             
             await self.db.add_points(message.author.id, message.guild.id, points)
             
             embed = discord.Embed(title="🎉 CHÚC MỪNG CHIẾN THẮNG!", color=0x00FF00)
             embed.description = f"👑 {message.author.mention} đã trả lời chính xác!\n\nĐáp án: **{correct_answer}**"
-            embed.add_field(name="Phần thưởng", value=f"💰 +{points:,} coinz\n(Gốc: {base_points:,}, Trừ gợi ý: -{base_points - calculated_points:,}, Human: x{multiplier})", inline=False)
-            if multiplier > 1:
-               embed.set_footer(text=f"🔥 CÂU HỎI KHÓ > 20 KÝ TỰ: NHÂN {multiplier} SỐ ĐIỂM! 🔥")
+            embed.add_field(name="Phần thưởng", value=f"💰 +{points:,} coinz\n(Trừ gợi ý: -{current_base_points - points:,})", inline=False)
+            
+            if len(correct_answer) > 25:
+               embed.set_footer(text="🔥 CÂU HỎI *SIÊU KHÓ* > 25 KÝ TỰ: x10 QUỸ THƯỞNG (50,000)! 🔥")
+            elif len(correct_answer) > 15:
+               embed.set_footer(text="🔥 CÂU HỎI *KHÓ* > 15 KÝ TỰ: QUỸ THƯỞNG 10,000! 🔥")
             else:
                embed.set_footer(text="Chuẩn bị câu tiếp theo trong 5 giây...")
             
