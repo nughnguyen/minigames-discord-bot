@@ -282,7 +282,7 @@ class HelpDropdown(discord.ui.Select):
                 value=(
                     f"`/hint` - Gợi ý chữ cái tiếp theo ({config.HINT_COST} coinz)\n"
                     f"`/pass` - Bỏ lượt an toàn ({config.PASS_COST} coinz)\n"
-                    f"**Timeout:** {config.TURN_TIMEOUT}s (Trừ {config.POINTS_TIMEOUT} coinz)"
+                    f"**Timeout:** {config.TURN_TIMEOUT}s (Trừ {abs(config.POINTS_TIMEOUT)} coinz)"
                 ),
                 inline=False
             )
@@ -290,7 +290,8 @@ class HelpDropdown(discord.ui.Select):
                 name="🏆 Điểm Thưởng",
                 value=(
                     f"• Đúng: +{config.POINTS_CORRECT}\n"
-                    f"• Từ dài/Khó: +{config.POINTS_LONG_WORD}/+{config.POINTS_ADVANCED_WORD}\n"
+                    f"• Tốc độ: +{int(config.POINTS_CORRECT * 0.2)} ~ +{config.POINTS_CORRECT}\n"
+                    f"• Từ dài/Khó: +{config.POINTS_LONG_WORD}\n"
                     f"• Sai: {config.POINTS_WRONG}"
                 ),
                 inline=False
@@ -379,6 +380,18 @@ class HelpView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=180)
         self.add_item(HelpDropdown())
+
+    @discord.ui.button(label="Về Menu Chính", style=discord.ButtonStyle.secondary, emoji="🔙", row=1)
+    async def back_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        embed = discord.Embed(
+            title=f"{emojis.SCROLL} Hướng Dẫn Bot MiniGames",
+            description="Hãy chọn một danh mục bên dưới để xem chi tiết các lệnh!",
+            color=config.COLOR_INFO
+        )
+        embed.set_footer(text=f"Bot được phát triển bởi Quốc Hưng | Prefix: {config.COMMAND_PREFIX}")
+        
+        # Reset view to clear selection
+        await interaction.response.edit_message(embed=embed, view=HelpView())
 
 
 async def setup(bot: commands.Bot):

@@ -413,13 +413,16 @@ class GameCog(commands.Cog):
         if turn_start > 0:
             elapsed = time.time() - turn_start
             if elapsed < 5:
-                points += 100 # Siêu tốc (<5s)
+                # Siêu tốc (<5s) - 100% Base (100 points)
+                points += 100 
                 bonus_list.append(f"⚡ Siêu tốc! (+100)")
             elif elapsed < 10:
-                points += 50  # Nhanh (<10s)
+                # Nhanh (<10s) - 50% Base (50 points)
+                points += 50
                 bonus_list.append(f"🏃 Nhanh! (+50)")
             elif elapsed < 20:
-                points += 20  # Khá (<20s)
+                # Khá (<20s) - 20% Base (20 points)
+                points += 20
                 bonus_list.append(f"🙂 Khá! (+20)")
         
         # Word Length/Advanced Bonus

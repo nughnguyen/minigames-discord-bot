@@ -17,26 +17,26 @@ REGISTRATION_TIMEOUT = int(os.getenv('REGISTRATION_TIMEOUT', 30))  # Thời gian
 TURN_TIMEOUT = int(os.getenv('TURN_TIMEOUT', 30))  # Thời gian mỗi lượt (giây)
 
 # Points System
-POINTS_CORRECT = int(os.getenv('POINTS_CORRECT', 10))
-POINTS_LONG_WORD = int(os.getenv('POINTS_LONG_WORD', 20))
-POINTS_RARE_WORD = int(os.getenv('POINTS_RARE_WORD', 10))
-POINTS_WRONG = int(os.getenv('POINTS_WRONG', -2))
-POINTS_TIMEOUT = int(os.getenv('POINTS_TIMEOUT', -10))
+POINTS_CORRECT = int(os.getenv('POINTS_CORRECT', 100))
+POINTS_LONG_WORD = int(os.getenv('POINTS_LONG_WORD', 200))
+POINTS_RARE_WORD = int(os.getenv('POINTS_RARE_WORD', 50))
+POINTS_WRONG = int(os.getenv('POINTS_WRONG', -50))
+POINTS_TIMEOUT = int(os.getenv('POINTS_TIMEOUT', -150))
 MAX_WRONG_ATTEMPTS = int(os.getenv('MAX_WRONG_ATTEMPTS', 5))
 
-# Time-Based Scoring (seconds)
-POINTS_FAST_REPLY = int(os.getenv('POINTS_FAST_REPLY', 3))  # < 10s
-POINTS_MEDIUM_REPLY = int(os.getenv('POINTS_MEDIUM_REPLY', 2))  # 10-20s
-POINTS_SLOW_REPLY = int(os.getenv('POINTS_SLOW_REPLY', 1))  # > 20s
+# Time-Based Scoring (seconds) - unused in code but kept for reference
+POINTS_FAST_REPLY = int(os.getenv('POINTS_FAST_REPLY', 100))
+POINTS_MEDIUM_REPLY = int(os.getenv('POINTS_MEDIUM_REPLY', 50)) 
+POINTS_SLOW_REPLY = int(os.getenv('POINTS_SLOW_REPLY', 20))
 
 # Advanced Word Scoring
-POINTS_ADVANCED_WORD = int(os.getenv('POINTS_ADVANCED_WORD', 20))  # IELTS 7+, long words
-MIN_WORD_LENGTH_EN = int(os.getenv('MIN_WORD_LENGTH_EN', 3))  # Minimum 3 letters for English
-LONG_WORD_THRESHOLD = int(os.getenv('LONG_WORD_THRESHOLD', 7))  # 7+ letters = long word
+POINTS_ADVANCED_WORD = int(os.getenv('POINTS_ADVANCED_WORD', 200))  # IELTS 7+, long words
+MIN_WORD_LENGTH_EN = int(os.getenv('MIN_WORD_LENGTH_EN', 3))
+LONG_WORD_THRESHOLD = int(os.getenv('LONG_WORD_THRESHOLD', 10))  # Changed threshold to 10 to match description
 
 # Powerups
-HINT_COST = int(os.getenv('HINT_COST', 10))
-PASS_COST = int(os.getenv('PASS_COST', 20))
+HINT_COST = int(os.getenv('HINT_COST', 100))
+PASS_COST = int(os.getenv('PASS_COST', 50))
 
 # Database
 DATABASE_PATH = 'data/wordchain.db'
