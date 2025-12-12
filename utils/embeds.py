@@ -289,7 +289,7 @@ def create_leaderboard_embed(leaderboard_data: List[Dict], server_name: str) -> 
     leaderboard_text = ""
     for idx, player in enumerate(leaderboard_data, 1):
         rank_emoji = emojis.get_rank_emoji(idx)
-        leaderboard_text += f"{rank_emoji} **#{idx}** <@{player['user_id']}> - **{player['total_points']:,}** coinz\n"
+        leaderboard_text += f"{rank_emoji} **#{idx}** <@{player['user_id']}> - **{player['total_points']:,}** coinz 🪙\n"
     
     embed.add_field(
         name="Danh Sách Tỷ Phú",

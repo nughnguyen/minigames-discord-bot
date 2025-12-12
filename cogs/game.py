@@ -104,7 +104,7 @@ class GameCog(commands.Cog):
                 f"• Nhấn **📝 Đăng Ký** để tham gia\n"
                 f"• <@{interaction.user.id}> nhấn **🎮 Bắt Đầu**\n"
                 f"• Mỗi lượt: **{config.TURN_TIMEOUT}s**\n"
-                f"• English: Min **3 chữ cái**"
+                f"• English: Từ phải có tối thiểu **3 chữ cái**"
             ),
             inline=False
         )
@@ -271,7 +271,7 @@ class GameCog(commands.Cog):
         embed = embeds.create_status_embed(status_data)
         await interaction.response.send_message(embed=embed)
     
-    @app_commands.command(name="hint", description="💡 Nhận gợi ý (tốn 10 coinz)")
+    @app_commands.command(name="hint", description="💡 Nhận gợi ý (tốn 100 coinz)")
     async def hint(self, interaction: discord.Interaction):
         """Gợi ý chữ cái tiếp theo"""
         game_state = await self.db.get_game_state(interaction.channel_id)
@@ -413,14 +413,14 @@ class GameCog(commands.Cog):
         if turn_start > 0:
             elapsed = time.time() - turn_start
             if elapsed < 5:
-                points += 10 # Siêu tốc (<5s)
-                bonus_list.append(f"⚡ Siêu tốc! (+10)")
+                points += 100 # Siêu tốc (<5s)
+                bonus_list.append(f"⚡ Siêu tốc! (+100)")
             elif elapsed < 10:
-                points += 5  # Nhanh (<10s)
-                bonus_list.append(f"🏃 Nhanh! (+5)")
+                points += 50  # Nhanh (<10s)
+                bonus_list.append(f"🏃 Nhanh! (+50)")
             elif elapsed < 20:
-                points += 2  # Khá (<20s)
-                bonus_list.append(f"🙂 Khá! (+2)")
+                points += 20  # Khá (<20s)
+                bonus_list.append(f"🙂 Khá! (+20)")
         
         # Word Length/Advanced Bonus
         word_info = None

@@ -123,13 +123,13 @@ class AdminCog(commands.Cog):
         if game_cog:
             await game_cog.start_turn_timeout(interaction.channel_id, interaction.user.id)
     
-    @app_commands.command(name="add-points", description="➕ Thêm coinz cho người chơi (Admin only)")
+    @app_commands.command(name="add-coinz", description="➕ Thêm coinz cho người chơi (Admin only)")
     @app_commands.describe(
         user="Người chơi nhận coinz",
         points="Số coinz cần thêm"
     )
     @app_commands.checks.has_permissions(administrator=True)
-    async def add_points(
+    async def add_coinz(
         self, 
         interaction: discord.Interaction,
         user: discord.User,
@@ -212,71 +212,173 @@ class AdminCog(commands.Cog):
     @app_commands.command(name="help", description="❓ Hướng dẫn sử dụng bot")
     async def help_command(self, interaction: discord.Interaction):
         """Hiển thị hướng dẫn"""
+        view = HelpView()
+        
         embed = discord.Embed(
-            title=f"{emojis.SCROLL} Hướng Dẫn Bot Nối Từ",
-            description="Chào mừng đến với bot nối từ! Dưới đây là các lệnh và cách chơi:",
+            title=f"{emojis.SCROLL} Hướng Dẫn Bot MiniGames",
+            description="Hãy chọn một danh mục bên dưới để xem chi tiết các lệnh!",
             color=config.COLOR_INFO
         )
-        
-        # Game Commands
-        embed.add_field(
-            name=f"{emojis.START} Lệnh Game",
-            value=(
-                "`/start-wordchain [ngôn_ngữ]` - Bắt đầu game\n"
-                "`/stop-wordchain` - Kết thúc game\n"
-                "`/status` - Xem trạng thái game\n"
-                "`/challenge-bot [ngôn_ngữ]` - Thách đấu bot 1vs1"
-            ),
-            inline=False
-        )
-        
-        # Powerup Commands
-        embed.add_field(
-            name=f"{emojis.JOKER} Lệnh Hỗ Trợ",
-            value=(
-                f"`/hint` - Gợi ý chữ cái tiếp theo ({config.HINT_COST} coinz)\n"
-                f"`/pass` - Bỏ lượt không bị trừ coinz ({config.PASS_COST} coinz)"
-            ),
-            inline=False
-        )
-        
-        # Stats Commands
-        embed.add_field(
-            name=f"{emojis.TROPHY} Lệnh Thống Kê",
-            value=(
-                "`/leaderboard` - Xem bảng xếp hạng\n"
-                "`/stats [user]` - Xem thống kê cá nhân"
-            ),
-            inline=False
-        )
-        
-        # How to Play
-        embed.add_field(
-            name=f"{emojis.THINKING} Cách Chơi",
-            value=(
-                "1️⃣ Bắt đầu game bằng `/start-wordchain`\n"
-                "2️⃣ Nối từ bắt đầu bằng chữ cái cuối của từ trước\n"
-                f"3️⃣ Bạn có **{config.TURN_TIMEOUT} giây** để trả lời\n"
-                "4️⃣ Từ không được lặp lại trong cùng game\n"
-                "5️⃣ Từ dài (>10 ký tự) nhận thêm coinz!"
-            ),
-            inline=False
-        )
-        
-        # Points System
-        embed.add_field(
-            name=f"{emojis.STAR} Hệ Thống Coinz",
-            value=(
-                f"✅ Từ đúng: **+{config.POINTS_CORRECT}** coinz\n"
-                f"🔥 Từ dài (>10 chữ): **+{config.POINTS_LONG_WORD}** coinz\n"
-                f"❌ Từ sai/Hết giờ: **{config.POINTS_WRONG}** coinz"
-            ),
-            inline=False
-        )
-        
         embed.set_footer(text=f"Bot được phát triển bởi Quốc Hưng | Prefix: {config.COMMAND_PREFIX}")
         
-        await interaction.response.send_message(embed=embed)
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+class HelpDropdown(discord.ui.Select):
+    def __init__(self):
+        options = [
+            discord.SelectOption(
+                label="Nối Từ (Word Chain)", 
+                description="Lệnh và cách chơi Nối Từ", 
+                emoji="🔤", 
+                value="wordchain"
+            ),
+            discord.SelectOption(
+                label="Vua Tiếng Việt", 
+                description="Lệnh và cách chơi Vua Tiếng Việt", 
+                emoji="👑", 
+                value="vtv"
+            ),
+            discord.SelectOption(
+                label="Hệ Thống & Admin", 
+                description="Lệnh thống kê và cài đặt", 
+                emoji="🛠️", 
+                value="system"
+            ),
+            discord.SelectOption(
+                label="Thông Tin", 
+                description="Thông tin bot và dev", 
+                emoji="ℹ️", 
+                value="info"
+            )
+        ]
+        super().__init__(
+            placeholder="Chọn danh mục cần tra cứu...", 
+            min_values=1, 
+            max_values=1, 
+            options=options
+        )
+
+    async def callback(self, interaction: discord.Interaction):
+        value = self.values[0]
+        
+        if value == "wordchain":
+            embed = discord.Embed(
+                title="🔤 Hướng Dẫn - Nối Từ",
+                description="Luật chơi: Nối tiếp từ bắt đầu bằng chữ cái cuối của từ trước đó.",
+                color=config.COLOR_INFO
+            )
+            embed.add_field(
+                name="🎮 Lệnh Game",
+                value=(
+                    "`/start` - Bắt đầu game (cần set kênh trước)\n"
+                    "`/stop` - Dừng game đang chơi\n"
+                    "`/challenge-bot` - Thách đấu solo với Bot\n"
+                    "`/status` - Xem trạng thái lượt chơi hiện tại"
+                ),
+                inline=False
+            )
+            embed.add_field(
+                name="💡 Hỗ Trợ",
+                value=(
+                    f"`/hint` - Gợi ý chữ cái tiếp theo ({config.HINT_COST} coinz)\n"
+                    f"`/pass` - Bỏ lượt an toàn ({config.PASS_COST} coinz)\n"
+                    f"**Timeout:** {config.TURN_TIMEOUT}s (Trừ {config.POINTS_TIMEOUT} coinz)"
+                ),
+                inline=False
+            )
+            embed.add_field(
+                name="🏆 Điểm Thưởng",
+                value=(
+                    f"• Đúng: +{config.POINTS_CORRECT}\n"
+                    f"• Từ dài/Khó: +{config.POINTS_LONG_WORD}/+{config.POINTS_ADVANCED_WORD}\n"
+                    f"• Sai: {config.POINTS_WRONG}"
+                ),
+                inline=False
+            )
+            
+        elif value == "vtv":
+            embed = discord.Embed(
+                title="👑 Hướng Dẫn - Vua Tiếng Việt",
+                description="Sắp xếp các ký tự bị đảo lộn thành từ/câu có nghĩa.",
+                color=config.COLOR_GOLD
+            )
+            embed.add_field(
+                name="🎮 Lệnh Game",
+                value=(
+                    "`/start` - Bắt đầu game (cần set kênh trước)\n"
+                    "`/stop` - Dừng game"
+                ),
+                inline=False
+            )
+            embed.add_field(
+                name="📖 Cách Chơi",
+                value=(
+                    "• Bot đưa ra một chuỗi ký tự bị xáo trộn.\n"
+                    "• Gõ trực tiếp đáp án vào kênh chat.\n"
+                    "• Sau 45s sẽ có gợi ý (bị trừ điểm thưởng).\n"
+                    "• Trả lời càng nhanh và ít gợi ý càng nhiều điểm!"
+                ),
+                inline=False
+            )
+            
+        elif value == "system":
+            embed = discord.Embed(
+                title="🛠️ Lệnh Hệ Thống & Admin",
+                description="Các lệnh chức năng và quản lý",
+                color=config.COLOR_NEUTRAL
+            )
+            embed.add_field(
+                name="📊 Thống Kê",
+                value=(
+                    "`/leaderboard` - Xem Bảng Xếp Hạng Top Server\n"
+                    "`/stats [user]` - Xem thông tin cá nhân"
+                ),
+                inline=False
+            )
+            embed.add_field(
+                name="⚙️ Admin (Quản Lý Kênh)",
+                value=(
+                    "`/kenh-noi-tu` - Đặt kênh hiện tại là kênh Nối Từ\n"
+                    "`/kenh-vua-tieng-viet` - Đặt kênh hiện tại là kênh VTV\n"
+                    "`/set-game-channel` - Cài đặt nâng cao\n"
+                    "`/add-coinz` - Cộng coinz cho thành viên\n"
+                    "`/reset-stats` - Reset dữ liệu chơi"
+                ),
+                inline=False
+            )
+
+        elif value == "info":
+            embed = discord.Embed(
+                title="ℹ️ Thông Tin Bot",
+                description="Bot MiniGames Discord - Giải trí và học tập",
+                color=config.COLOR_SUCCESS
+            )
+            embed.add_field(
+                name="👨‍💻 Developer",
+                value="Quốc Hưng",
+                inline=True
+            )
+            embed.add_field(
+                name="🤖 Phiên bản",
+                value="2.1.0",
+                inline=True
+            )
+            embed.add_field(
+                name="📝 Liên hệ",
+                value="Báo lỗi hoặc góp ý trực tiếp cho admin.",
+                inline=False
+            )
+
+        # Set footer chung
+        embed.set_footer(text=f"Bot MiniGames | Prefix: {config.COMMAND_PREFIX}")
+        
+        # Update message
+        await interaction.response.edit_message(embed=embed, view=self.view)
+
+class HelpView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=180)
+        self.add_item(HelpDropdown())
 
 
 async def setup(bot: commands.Bot):
