@@ -104,67 +104,50 @@ def create_rich_correct_answer_embed(
     points: int, 
     bonus_reason: str
 ) -> List[discord.Embed]:
-    """Tạo bộ embed câu trả lời đúng theo style Discord Hook (2 embeds)"""
+    """Tạo bộ embed câu trả lời đúng (Merged version)"""
     
-    embeds_list = []
-    
-    # === Embed 1: Word & Meaning ===
-    embed1 = discord.Embed(
+    # === Embed 1: Main Embed ===
+    embed = discord.Embed(
         title=f"{word.upper()}", # Title is the WORD (Big text)
         color=config.COLOR_SUCCESS,
         timestamp=datetime.now(timezone(timedelta(hours=7)))
     )
     
-    # Author Info (Change to "Chính xác")
-    embed1.set_author(
+    # Author Info
+    embed.set_author(
         name=f"Chính xác! - {author.display_name}",
         icon_url=author.display_avatar.url
     )
     
-    # Description Structure:
-    # 🇻🇳 Nghĩa:
-    # **`MEANING`**
+    # Description: Phonetic + Meaning
+    desc_lines = []
     
     phonetic = ""
     if word_info and word_info.get('phonetic'):
         phonetic = f" /{word_info['phonetic']}/"
         
-    desc_lines = []
-    # Line 1: Phonetic if exists (Word is already in Title)
     if phonetic:
         desc_lines.append(f"`{phonetic}`")
     
-    # Line 2: Meaning
     if meaning_vi:
         desc_lines.append(f"\n🇻🇳 Nghĩa:\n**{meaning_vi}**")
-    
-    if word_info and word_info.get('definition'):
-        desc_lines.append(f"\n🇬🇧 Definition:\n*{word_info['definition']}*")
         
-    embed1.description = "".join(desc_lines)
+    embed.description = "".join(desc_lines)
     
     # Add clickable link if audio exists
     if word_info and word_info.get('audio_url'):
-        embed1.url = word_info['audio_url']
+        embed.url = word_info['audio_url']
         
-    embeds_list.append(embed1)
-    
-    # === Embed 2: Points & Bonuses ===
-    # Chỉ hiện nếu có điểm hoặc bonus
+    # === Add Points Fields ===
     if points > 0:
-        embed2 = discord.Embed(
-            title=f"📈 Cộng Coinz :moneybag:",
-            color=config.COLOR_SUCCESS,
-            timestamp=datetime.now(timezone(timedelta(hours=7)))
+        # Field 1: Base Points
+        embed.add_field(
+            name="Từ hợp lệ",
+            value=f"+{config.POINTS_CORRECT:,}",
+            inline=True
         )
         
-        # Field 1: Điểm cơ bản
-        # Tính ngược điểm cơ bản từ tổng (Total - Bonuses)
-        # Tuy nhiên logic ở game.py đã cộng hết vào points, nên ta chỉ hiển thị flow
-        
-        # Chúng ta sẽ hiển thị các thành phần điểm
-        # 1. Base Logic (giả sử points hiện tại là tổng)
-        # Parse bonus reasons
+        # Field 2...n: Bonuses
         bonuses = []
         if bonus_reason:
             if isinstance(bonus_reason, list):
@@ -172,40 +155,22 @@ def create_rich_correct_answer_embed(
             else:
                  bonuses = [b.strip() for b in bonus_reason.split('\n') if b.strip()]
         
-        # Để đẹp, ta hiển thị:
-        # Field 1: Kết quả nối từ (+Core)
-        # Field 2...n: Các bonus
-        # Field Last: TỔNG
-        
-        # Tuy nhiên user format là list các field
-        # Ta sẽ add từng bonus thành 1 field
-        
-        embed2.add_field(
-            name="Từ hợp lệ",
-            value=f"+{config.POINTS_CORRECT:,} {emojis.ANIMATED_EMOJI_COINZ}",
-            inline=True
-        )
-        
         for bonus in bonuses:
-            # Bonus strings text like "Running Fast (+2)"
-            # Tách text và điểm nếu có thể, hoặc để nguyên
-            embed2.add_field(
+            embed.add_field(
                 name="Bonus",
                 value=bonus,
                 inline=True
             )
             
-        # Tổng kết (Nếu có bonus mới hiện tổng, ko thì thôi cho đỡ rác, nhưng user muốn structure 2)
+        # Total Row
         if bonuses:
-            embed2.add_field(
+            embed.add_field(
                 name="Tổng cộng",
                 value=f"**+{points:,}** {emojis.ANIMATED_EMOJI_COINZ}",
                 inline=False
             )
-            
-        embeds_list.append(embed2)
     
-    return embeds_list
+    return [embed]
 
 def create_wrong_answer_embed(player_mention: str, word: str, reason: str) -> discord.Embed:
     """Tạo embed cho câu trả lời sai"""

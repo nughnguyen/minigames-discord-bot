@@ -448,13 +448,21 @@ class GameCog(commands.Cog):
 
             # Check length bonus
             # Check dictionary for advanced status or long status
+            # Check dictionary for level or long status
             word_info = await validator.cambridge_api.get_word_info(word, 'en')
-            if word_info and word_info.get('is_advanced'):
-                points += config.POINTS_ADVANCED_WORD # 20 points
-                bonus_list.append(f"📚 Từ cao cấp! (+{config.POINTS_ADVANCED_WORD})")
-            elif len(word) >= config.LONG_WORD_THRESHOLD:
-                # Just long word
-                points += config.POINTS_LONG_WORD # 20 points
+            
+            level_points = 0
+            if word_info and word_info.get('level'):
+                level = word_info['level']
+                level_points = config.LEVEL_BONUS.get(level, 0)
+                
+                if level_points > 0:
+                    points += level_points
+                    bonus_list.append(f"📚 Level {level.upper()}! (+{level_points})")
+            
+            # Fallback to long word bonus if no level bonus was awarded
+            if level_points == 0 and len(word) >= config.LONG_WORD_THRESHOLD:
+                points += config.POINTS_LONG_WORD # 200 points
                 bonus_list.append(f"📝 Từ dài! (+{config.POINTS_LONG_WORD})")
                 
         elif validator.is_long_word(word):

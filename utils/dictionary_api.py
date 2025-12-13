@@ -99,7 +99,7 @@ class CambridgeDictionaryAPI(DictionaryAPI):
                         'word': word,
                         'phonetic': '',
                         'definition': '',
-                        'is_advanced': False
+                        'level': None
                     }
                     
                     # Extract phonetic (IPA)
@@ -130,15 +130,18 @@ class CambridgeDictionaryAPI(DictionaryAPI):
                     except:
                         pass
                     
-                    # Check if advanced word (IELTS 7+, academic)
-                    # Long words (8+ letters) or contains academic markers
-                    if (len(word) >= 8 or 
-                        'C2' in text or 'C1' in text or  # CEFR advanced levels
-                        'formal' in text.lower() or 
-                        'academic' in text.lower()):
-                        word_info['is_advanced'] = True
+                    # Check for proficiency levels
+                    text_lower = text.lower()
                     
-                    logger.info(f"✅ Cambridge: '{word}' is valid (advanced: {word_info['is_advanced']})")
+                    # Regex to find exact level markers between tags
+                    # Matches A1-C2, formal, academic, specialized, technical, literary, ielts, toeic
+                    level_regex = r'>\s*(a1|a2|b1|b2|c1|c2|academic|formal|specialized|technical|literary|ielts|toeic)\s*<'
+                    level_match = re.search(level_regex, text_lower)
+                    
+                    if level_match:
+                        word_info['level'] = level_match.group(1)  # e.g., 'c1'
+                    
+                    logger.info(f"✅ Cambridge: '{word}' is valid (level: {word_info['level']})")
                     return word_info
                 
                 elif response.status == 404:

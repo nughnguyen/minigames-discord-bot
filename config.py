@@ -30,9 +30,26 @@ POINTS_MEDIUM_REPLY = int(os.getenv('POINTS_MEDIUM_REPLY', 50))
 POINTS_SLOW_REPLY = int(os.getenv('POINTS_SLOW_REPLY', 20))
 
 # Advanced Word Scoring
-POINTS_ADVANCED_WORD = int(os.getenv('POINTS_ADVANCED_WORD', 200))  # IELTS 7+, long words
 MIN_WORD_LENGTH_EN = int(os.getenv('MIN_WORD_LENGTH_EN', 3))
-LONG_WORD_THRESHOLD = int(os.getenv('LONG_WORD_THRESHOLD', 10))  # Changed threshold to 10 to match description
+LONG_WORD_THRESHOLD = int(os.getenv('LONG_WORD_THRESHOLD', 10))
+
+# English Level Scoring
+# Max bonus: 1000 (Academic/C2), Min: 0 (A1)
+LEVEL_BONUS = {
+    'a1': 0,
+    'a2': 10,
+    'b1': 50,
+    'b2': 150,
+    'c1': 500,
+    'c2': 800,
+    'academic': 1000,
+    'formal': 300,
+    'specialized': 600,
+    'technical': 600,
+    'literary': 700,
+    'ielts': 600,
+    'toeic': 600
+}
 
 # Powerups
 HINT_COST = int(os.getenv('HINT_COST', 100))
