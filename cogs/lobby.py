@@ -26,7 +26,15 @@ class LobbyCog(commands.Cog):
             # Call WordChain start command directly
             game_cog = self.bot.get_cog("GameCog")
             if game_cog:
-                await game_cog.start_wordchain(interaction, None)
+                await game_cog.start_wordchain(interaction, "vi") # Default to vietnamese for normal wordchain
+            else:
+                await interaction.response.send_message("❌ Lỗi: Game Nối Từ chưa được load.", ephemeral=True)
+
+        elif game_type == "wordchain_en":
+            # Call WordChain start command with English
+            game_cog = self.bot.get_cog("GameCog")
+            if game_cog:
+                await game_cog.start_wordchain(interaction, "en")
             else:
                 await interaction.response.send_message("❌ Lỗi: Game Nối Từ chưa được load.", ephemeral=True)
 
@@ -58,7 +66,7 @@ class LobbyCog(commands.Cog):
              )
              return
 
-        if game_type == "wordchain":
+        if game_type == "wordchain" or game_type == "wordchain_en":
             game_cog = self.bot.get_cog("GameCog")
             if game_cog:
                 await game_cog.stop_wordchain(interaction)

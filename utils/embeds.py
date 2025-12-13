@@ -259,9 +259,12 @@ def create_game_end_embed(winner_data: Dict, total_turns: int, used_words_count:
     )
     
     if winner_data:
+        # winner_data contains: 'user_id', 'session_points', 'total_points'
+        session_text = f"**{winner_data['session_points']:,} coinz** {emojis.ANIMATED_EMOJI_COINZ}"
+        
         embed.add_field(
             name=f"{emojis.CROWN} Người Chiến Thắng",
-            value=f"<@{winner_data['user_id']}> với **{winner_data['points']:,} coinz**! {emojis.ANIMATED_EMOJI_COINZ}",
+            value=f"<@{winner_data['user_id']}> vòng này kiếm được: {session_text}",
             inline=False
         )
     

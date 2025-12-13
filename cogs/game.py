@@ -214,15 +214,19 @@ class GameCog(commands.Cog):
             self.active_timeouts[interaction.channel_id].cancel()
             del self.active_timeouts[interaction.channel_id]
         
-        # Tìm người thắng (người có nhiều điểm nhất)
+        # Tìm người thắng (người có nhiều điểm nhất trong phiên)
+        scores = game_state.get('scores', {})
         winner_id = None
-        max_points = -999999
+        session_points = 0
+        total_points = 0
         
-        for player_id in game_state['players']:
-            points = await self.db.get_player_points(player_id, interaction.guild_id)
-            if points > max_points:
-                max_points = points
-                winner_id = player_id
+        if scores:
+            # scores keys are stored as strings in JSON
+            best_uid_str = max(scores, key=scores.get)
+            winner_id = int(best_uid_str)
+            session_points = scores[best_uid_str]
+            # Lấy tổng điểm
+            total_points = await self.db.get_player_points(winner_id, interaction.guild_id)
         
         # Lưu lịch sử
         await self.db.save_game_history(
@@ -239,7 +243,12 @@ class GameCog(commands.Cog):
         await self.db.delete_game(interaction.channel_id)
         
         # Thông báo kết thúc
-        winner_data = {'user_id': winner_id, 'points': max_points} if winner_id else None
+        winner_data = {
+            'user_id': winner_id, 
+            'session_points': session_points,
+            'total_points': total_points
+        } if winner_id else None
+        
         embed = embeds.create_game_end_embed(
             winner_data=winner_data,
             total_turns=game_state['turn_count'],
@@ -294,6 +303,7 @@ class GameCog(commands.Cog):
         
         # Trừ điểm
         await self.db.add_points(interaction.user.id, interaction.guild_id, -config.HINT_COST)
+        await self.db.update_game_score(interaction.channel_id, interaction.user.id, -config.HINT_COST)
         
         # Lấy gợi ý
         validator = self.validators[game_state['language']]
@@ -334,6 +344,7 @@ class GameCog(commands.Cog):
         
         # Trừ điểm
         await self.db.add_points(interaction.user.id, interaction.guild_id, -config.PASS_COST)
+        await self.db.update_game_score(interaction.channel_id, interaction.user.id, -config.PASS_COST)
         
         # Chuyển lượt (giữ nguyên từ hiện tại)
         # Tìm người chơi tiếp theo (không phải bot challenge)
@@ -454,6 +465,7 @@ class GameCog(commands.Cog):
         
         # Cập nhật điểm và stats
         await self.db.add_points(message.author.id, message.guild.id, points)
+        await self.db.update_game_score(message.channel.id, message.author.id, points)
         await self.db.update_player_stats(message.author.id, message.guild.id, word, True)
         
         # Tìm người chơi tiếp theo
@@ -607,6 +619,7 @@ class GameCog(commands.Cog):
             player = self.bot.get_user(player_id)
             
             await self.db.add_points(player_id, game_state['guild_id'], config.POINTS_TIMEOUT)
+            await self.db.update_game_score(channel_id, player_id, config.POINTS_TIMEOUT)
             
             # Gửi thông báo timeout
             embed = embeds.create_timeout_embed(player.mention)
@@ -643,6 +656,7 @@ class GameCog(commands.Cog):
         penalty = config.POINTS_WRONG # -2
         
         await self.db.add_points(message.author.id, message.guild.id, penalty)
+        await self.db.update_game_score(message.channel.id, message.author.id, penalty)
         await self.db.update_player_stats(message.author.id, message.guild.id, word, False)
         
         # Update wrong attempts count

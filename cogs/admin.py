@@ -195,12 +195,12 @@ class AdminCog(commands.Cog):
             pass
             
     # Alias commands as requested by user
-    @app_commands.command(name="kenh-noi-tu", description="⚙️ Đặt kênh này làm kênh Nối Từ")
+    @app_commands.command(name="kenh-noi-tu-vn", description="⚙️ Đặt kênh này làm kênh Nối Từ Tiếng Việt")
     @app_commands.checks.has_permissions(administrator=True)
     async def set_wordchain_channel(self, interaction: discord.Interaction):
-        """Đặt kênh nối từ"""
+        """Đặt kênh nối từ tiếng việt"""
         await self.db.set_channel_config(interaction.channel_id, interaction.guild_id, "wordchain")
-        await interaction.response.send_message(f"✅ Đã đặt kênh này làm kênh chuyên **Nối Từ**!\nGõ `/start` để chơi ngay.", ephemeral=True)
+        await interaction.response.send_message(f"✅ Đã đặt kênh này làm kênh chuyên **Nối Từ (Tiếng Việt)**!\nGõ `/start` để chơi ngay.", ephemeral=True)
 
     @app_commands.command(name="kenh-vua-tieng-viet", description="⚙️ Đặt kênh này làm kênh Vua Tiếng Việt")
     @app_commands.checks.has_permissions(administrator=True)
@@ -208,6 +208,13 @@ class AdminCog(commands.Cog):
         """Đặt kênh vua tiếng việt"""
         await self.db.set_channel_config(interaction.channel_id, interaction.guild_id, "vuatiengviet")
         await interaction.response.send_message(f"✅ Đã đặt kênh này làm kênh chuyên **Vua Tiếng Việt**!\nGõ `/start` để chơi ngay.", ephemeral=True)
+        
+    @app_commands.command(name="kenh-noi-tu-en", description="⚙️ Đặt kênh này làm kênh Nối Từ Tiếng Anh (English)")
+    @app_commands.checks.has_permissions(administrator=True)
+    async def set_wordchain_en_channel(self, interaction: discord.Interaction):
+        """Đặt kênh nối từ tiếng anh"""
+        await self.db.set_channel_config(interaction.channel_id, interaction.guild_id, "wordchain_en")
+        await interaction.response.send_message(f"✅ Đã đặt kênh này làm kênh chuyên **Nối Từ (English)**!\nGõ `/start` để chơi ngay.", ephemeral=True)
     
 
 
