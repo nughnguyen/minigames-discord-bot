@@ -8,6 +8,8 @@ import asyncio
 from typing import Optional
 import random
 import time
+import json
+import aiosqlite
 
 import config
 from utils import embeds, emojis
@@ -86,10 +88,11 @@ class GameCog(commands.Cog):
         
         lang_flag = "🇻🇳" if lang == "vi" else "🇬🇧"
         lang_name = "Tiếng Việt" if lang == "vi" else "English"
+        reg_end_time = int(time.time() + config.REGISTRATION_TIMEOUT)
         
         reg_embed = discord.Embed(
             title=f"{emojis.START} Đăng Ký Tham Gia Game!",
-            description=f"**Ngôn ngữ:** {lang_flag} {lang_name}",
+            description=f"**Ngôn ngữ:** {lang_flag} {lang_name}\n⏳ Kết thúc đăng ký: <t:{reg_end_time}:R>",
             color=config.COLOR_INFO
         )
         
@@ -110,7 +113,7 @@ class GameCog(commands.Cog):
             inline=False
         )
         
-        view = RegistrationView(host_id=interaction.user.id)
+        view = RegistrationView(host_id=interaction.user.id, timeout=config.REGISTRATION_TIMEOUT)
         await interaction.response.send_message(embed=reg_embed, view=view)
         
         # Wait for start button
@@ -144,9 +147,7 @@ class GameCog(commands.Cog):
             is_bot_challenge=is_bot_challenge
         )
         
-        import json
-        import aiosqlite
-        import time
+
         async with aiosqlite.connect(config.DATABASE_PATH) as db:
             await db.execute(
                 "UPDATE game_states SET players = ?, turn_start_time = ? WHERE channel_id = ?",
