@@ -45,6 +45,31 @@ class BetModal(discord.ui.Modal):
         except ValueError:
             await interaction.response.send_message("❌ Vui lòng nhập số hợp lệ!", ephemeral=True)
 
+class PlayAgainView(discord.ui.View):
+    def __init__(self, host_id, timeout=60):
+        super().__init__(timeout=timeout)
+        self.host_id = host_id
+        self.choice = None
+        self.next_interaction = None
+
+    @discord.ui.button(label="Chơi Tiếp", style=discord.ButtonStyle.success)
+    async def continue_game(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.host_id:
+             await interaction.response.send_message("❌ Chỉ chủ phòng mới được chọn!", ephemeral=True)
+             return
+        self.choice = "continue"
+        self.next_interaction = interaction
+        self.stop()
+
+    @discord.ui.button(label="Dừng Lại", style=discord.ButtonStyle.danger)
+    async def stop_game(self, interaction: discord.Interaction, button: discord.ui.Button):
+         if interaction.user.id != self.host_id:
+             await interaction.response.send_message("❌ Chỉ chủ phòng mới được chọn!", ephemeral=True)
+             return
+         self.choice = "stop"
+         self.next_interaction = interaction
+         self.stop()
+
 class BauCuaView(discord.ui.View):
     def __init__(self, bot, db, host_id, timeout=120):
         super().__init__(timeout=timeout)
@@ -59,12 +84,12 @@ class BauCuaView(discord.ui.View):
         
         # Define sides with names and emojis
         self.sides = [
-            {"id": "side_1", "name": "Bau", "emoji": emojis.SIDE_1},
-            {"id": "side_2", "name": "Cua", "emoji": emojis.SIDE_2},
-            {"id": "side_3", "name": "Tom", "emoji": emojis.SIDE_3},
-            {"id": "side_4", "name": "Ca", "emoji": emojis.SIDE_4},
-            {"id": "side_5", "name": "Nai", "emoji": emojis.SIDE_5},
-            {"id": "side_6", "name": "Ga", "emoji": emojis.SIDE_6},
+            {"id": "side_1", "name": "Nai", "emoji": emojis.SIDE_1},
+            {"id": "side_2", "name": "Bầu", "emoji": emojis.SIDE_2},
+            {"id": "side_3", "name": "Mèo", "emoji": emojis.SIDE_3},
+            {"id": "side_4", "name": "Cá", "emoji": emojis.SIDE_4},
+            {"id": "side_5", "name": "Cua", "emoji": emojis.SIDE_5},
+            {"id": "side_6", "name": "Tôm", "emoji": emojis.SIDE_6},
         ]
 
         # Add betting buttons
@@ -147,21 +172,17 @@ class BauCuaView(discord.ui.View):
         await interaction.response.defer()
         self.stop() # Stop interactions
 
-    async def update_embed(self, dice_animation_str=None):
+    async def update_embed(self):
         if not self.message: return
         try:
             embed = self.message.embeds[0]
             
-            # 1. Update DICE ANIMATION field (Index 1) if provided
-            if dice_animation_str:
-                 embed.set_field_at(1, name="🎲 Xúc Xắc Đang Lắc...", value=dice_animation_str, inline=False)
-
-            # 2. Update TOTAL BETS field (Index 0)
+            # Update TOTAL BETS field (Index 0)
             total_pot = sum(self.user_total_bet.values())
             total_players = len(self.bets)
-            embed.set_field_at(0, name="Tổng Cược", value=f"**{total_pot:,}** coinz {emojis.ANIMATED_EMOJI_COINZ} ({total_players} người chơi)", inline=False)
+            embed.set_field_at(0, name="💰 Tổng Cược", value=f"**{total_pot:,}** coinz {emojis.ANIMATED_EMOJI_COINZ} ({total_players} người chơi)", inline=False)
             
-            # 3. Update BET LIST field (Index 2)
+            # Update BET LIST field (Index 1)
             bet_details = []
             for uid, user_bets in self.bets.items():
                 b_str = []
@@ -173,8 +194,8 @@ class BauCuaView(discord.ui.View):
             val = "\n".join(bet_details) if bet_details else "Chưa có cược"
             if len(val) > 1024: val = val[:1000] + "..."
             
-            if len(embed.fields) > 2:
-                embed.set_field_at(2, name="📝 Danh sách cược", value=val, inline=False)
+            if len(embed.fields) > 1:
+                embed.set_field_at(1, name="📝 Danh sách cược", value=val, inline=False)
             else:
                 embed.add_field(name="📝 Danh sách cược", value=val, inline=False)
 
@@ -200,42 +221,64 @@ class BauCuaCog(commands.Cog):
         self.emoji_list = [emojis.SIDE_1, emojis.SIDE_2, emojis.SIDE_3, emojis.SIDE_4, emojis.SIDE_5, emojis.SIDE_6]
 
     async def animate_waiting(self, view: BauCuaView):
-        """Animates the dice in the lobby while waiting"""
-        # Pos 0, 2, 4: 1->6
-        # Pos 1, 3, 5: 3->6->1->2 (Started from index 2)
-        idx1 = 0
-        idx2 = 2
-        
+        """Keeps the embed updated while waiting"""
         while not view.stop_event.is_set():
             if view.message:
                 try:
-                    # Calc current emojis
-                    current_emojis = []
-                    for i in range(6):
-                        if i % 2 == 0: # 0, 2, 4
-                             emoji = self.emoji_list[idx1] 
-                        else: # 1, 3, 5
-                             emoji = self.emoji_list[idx2]
-                        current_emojis.append(emoji)
-                    
-                    # Update indices
-                    idx1 = (idx1 + 1) % 6
-                    idx2 = (idx2 + 1) % 6
-                    
-                    # Format string
-                    display_str = f"{current_emojis[0]} {current_emojis[1]} {current_emojis[2]}\n{current_emojis[3]} {current_emojis[4]} {current_emojis[5]}"
-                    
-                    # Call single update method for everything
-                    await view.update_embed(dice_animation_str=display_str)
+                    # Only update betting info, no animation needed
+                    await view.update_embed()
 
                 except Exception as e:
-                    print(f"Animation error: {e}")
+                    print(f"Update error: {e}")
             
-            # Wait 1.0s - The absolute fastest compliant SUSTAINED speed
-            # Since we merged updates, this won't clash with betting updates
+            # Wait 1.0s to refresh betting info
             await asyncio.sleep(1.0)
 
     async def start_game(self, interaction: discord.Interaction):
+        host_id = interaction.user.id
+        current_interaction = interaction
+        
+        while True:
+            # Run the round
+            await self.run_round(current_interaction)
+            
+            # Ask to continue
+            play_again_view = PlayAgainView(host_id)
+            try:
+                msg = await current_interaction.channel.send(
+                    f"**{interaction.user.display_name}**, bạn có muốn tiếp tục chơi Bầu Cua không?", 
+                    view=play_again_view
+                )
+            except Exception:
+                # Channel might be gone or no perms
+                break
+            
+            await play_again_view.wait()
+            
+            if play_again_view.choice == "continue":
+                current_interaction = play_again_view.next_interaction
+                # Delete the prompt message to clean up? Optional.
+                try:
+                    await msg.delete()
+                except:
+                    pass
+                continue
+            else:
+                if play_again_view.next_interaction:
+                    await play_again_view.next_interaction.response.send_message("👋 Cảm ơn đã chơi! Hẹn gặp lại.", ephemeral=True)
+                else:
+                    # Timeout
+                    pass 
+                    # await current_interaction.channel.send("👋 Game đã kết thúc do hết thời gian chờ!")
+                
+                # Try to disable buttons on the prompt
+                try:
+                    await msg.edit(view=None)
+                except:
+                    pass
+                break
+
+    async def run_round(self, interaction: discord.Interaction):
         # Initial Embed
         embed = discord.Embed(
             title="🎲 BẦU CUA TÔM CÁ (Space Edition) 🎲",
@@ -251,10 +294,10 @@ class BauCuaCog(commands.Cog):
         # Pre-add "Total Bet" field at index 0
         embed.add_field(name="💰 Tổng Cược", value="**0** coinz {emojis.ANIMATED_EMOJI_COINZ} (0 người chơi)", inline=False)
         
-        # Pre-add "Animation" field at index 1
-        embed.add_field(name="🎲 Xúc Xắc Đang Lắc...", value=f"{emojis.SIDE_1} {emojis.SIDE_2} {emojis.SIDE_3}\n{emojis.SIDE_4} {emojis.SIDE_5} {emojis.SIDE_6}", inline=False)
+        # Set static image
+        embed.set_image(url="https://media.discordapp.net/attachments/1449574237734965311/1449574316361519175/bau-cua.jpg?ex=693f64c8&is=693e1348&hm=55e841a05991f0f8d26114203ffb8b28def31e942729034aaa7cd0245f46ef58&=&format=webp&width=1240&height=829")
         
-        # Add "Bet List" field placeholder at index 2
+        # Add "Bet List" field placeholder at index 1
         embed.add_field(name="� Danh sách cược", value="Chưa có cược", inline=False)
 
         view = BauCuaView(self.bot, self.db, interaction.user.id, timeout=120)
