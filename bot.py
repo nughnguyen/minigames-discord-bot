@@ -1,8 +1,5 @@
 """
-Discord Word Chain Bot - Nối Từ
-Bot chơi trò nối từ đa người chơi với nhiều tính năng "xịn"
-
-Author: Developed with ❤️
+Author: Developed by QUoc Hung with ❤️
 Version: 1.0.0
 """
 import discord
@@ -12,6 +9,7 @@ import os
 
 import config
 from utils import emojis
+from database.db_manager import DatabaseManager
 
 # Intents
 intents = discord.Intents.default()
@@ -27,6 +25,7 @@ class WordChainBot(commands.Bot):
             intents=intents,
             help_command=None  # Sử dụng custom help command
         )
+        self.db = DatabaseManager(config.DATABASE_PATH)
     
     async def setup_hook(self):
         """Load all cogs and initialize services"""
@@ -39,6 +38,10 @@ class WordChainBot(commands.Bot):
         
         # Initialize Dictionary API Service
         from utils.dictionary_api import init_dictionary_service
+
+        # Initialize Database
+        await self.db.initialize()
+        print("  ✅ Database initialized")
         
         # Load fallback word lists từ files
         fallback_words = {'vi': set(), 'en': set()}
@@ -80,7 +83,8 @@ class WordChainBot(commands.Bot):
             'cogs.vua_tieng_viet',
             'cogs.bau_cua',
             'cogs.lobby',
-            'cogs.help'
+            'cogs.help',
+            'cogs.donation'
         ]
         
         for cog in cogs:

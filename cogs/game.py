@@ -300,7 +300,7 @@ class GameCog(commands.Cog):
         points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
         if points < config.HINT_COST:
             await interaction.response.send_message(
-                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ coinz! Cần {config.HINT_COST} coinz, bạn chỉ có {points} coinz {emojis.ANIMATED_EMOJI_COINZ}",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ Coinz! Cần {config.HINT_COST} Coinz, bạn chỉ có {points} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
                 ephemeral=True
             )
             return
@@ -317,7 +317,7 @@ class GameCog(commands.Cog):
         embed = embeds.create_hint_embed(hint_char, config.HINT_COST)
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
-    @app_commands.command(name="pass", description="⏭️ Bỏ lượt (tốn 20 coinz)")
+    @app_commands.command(name="pass", description="⏭️ Bỏ lượt (tốn 20 Coinz)")
     async def pass_turn(self, interaction: discord.Interaction):
         """Bỏ lượt không bị trừ coinz timeout"""
         game_state = await self.db.get_game_state(interaction.channel_id)
@@ -341,7 +341,7 @@ class GameCog(commands.Cog):
         points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
         if points < config.PASS_COST:
             await interaction.response.send_message(
-                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ coinz! Cần {config.PASS_COST} coinz, bạn chỉ có {points} coinz {emojis.ANIMATED_EMOJI_COINZ}",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ Coinz! Cần {config.PASS_COST} Coinz, bạn chỉ có {points} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
                 ephemeral=True
             )
             return
@@ -367,7 +367,7 @@ class GameCog(commands.Cog):
         
         # Thông báo
         await interaction.response.send_message(
-            f"{emojis.PASS} {interaction.user.mention} đã bỏ lượt! (-{config.PASS_COST} coinz {emojis.ANIMATED_EMOJI_COINZ})\n"
+            f"{emojis.PASS} {interaction.user.mention} đã bỏ lượt! (-{config.PASS_COST} Coinz {emojis.ANIMATED_EMOJI_COINZ})\n"
             f"Lượt tiếp theo: {next_player.mention}"
         )
         
@@ -637,7 +637,7 @@ class GameCog(commands.Cog):
             # Gửi thông báo timeout
             embed = embeds.create_timeout_embed(player.mention)
             # Override description to show correct penalty
-            embed.description = f"{player.mention} {emojis.SNAIL} đã không trả lời kịp thời! (-{abs(config.POINTS_TIMEOUT)} coinz {emojis.ANIMATED_EMOJI_COINZ})"
+            embed.description = f"{player.mention} {emojis.SNAIL} đã không trả lời kịp thời! (-{abs(config.POINTS_TIMEOUT)} Coinz {emojis.ANIMATED_EMOJI_COINZ})"
             await channel.send(embed=embed)
             
             # Chuyển lượt
@@ -705,7 +705,7 @@ class GameCog(commands.Cog):
             embed = embeds.create_wrong_answer_embed(
                 message.author.mention,
                 word,
-                f"{reason}\n⚠️ Bạn còn **{remaining}** lần thử. (Bị trừ {abs(penalty)} coinz {emojis.ANIMATED_EMOJI_COINZ})"
+                f"{reason}\n⚠️ Bạn còn **{remaining}** lần thử. (Bị trừ {abs(penalty)} Coinz {emojis.ANIMATED_EMOJI_COINZ})"
             )
             await message.channel.send(embed=embed)
 

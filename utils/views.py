@@ -1,118 +1,83 @@
-"""
-Registration View - Discord Buttons for player registration
-"""
 import discord
 from discord import ui
-import asyncio
-from typing import Set
+import config
+from utils import emojis
+import urllib.parse
+import datetime
 
-
-class RegistrationView(ui.View):
-    """
-    View with buttons for game registration
-    - 📝 Đăng Ký button: Anyone can click to join
-    - 🎮 Bắt Đầu button: Host only, starts the game
-    """
-    
-    def __init__(self, host_id: int, timeout: int = None):
-        super().__init__(timeout=timeout)
-        self.host_id = host_id
-        self.registered_players: Set[int] = set()
-        self.game_started = False
-        
-    @ui.button(label="Đăng Ký", emoji="📝", style=discord.ButtonStyle.primary, custom_id="register")
-    async def register_button(self, interaction: discord.Interaction, button: ui.Button):
-        """Register player for the game"""
-        user_id = interaction.user.id
-        
-        if user_id in self.registered_players:
-            await interaction.response.send_message(
-                "✅ Bạn đã đăng ký rồi!",
-                ephemeral=True
-            )
-            return
-        
-        # Add player to registered list
-        self.registered_players.add(user_id)
-        
-        # Update the message
-        embed = interaction.message.embeds[0]
-        # Update player count in embed
-        for idx, field in enumerate(embed.fields):
-            if field.name.startswith("👥"):
-                player_list = "\n".join([f"• <@{pid}>" for pid in self.registered_players]) if self.registered_players else "Chưa có ai"
-                embed.set_field_at(
-                    idx,
-                    name=f"👥 Đã Đăng Ký ({len(self.registered_players)} người)",
-                    value=player_list,
-                    inline=False
-                )
-                break
-        
-        await interaction.response.edit_message(embed=embed, view=self)
-        
-        # Send confirmation
-        await interaction.followup.send(
-            f"✅ {interaction.user.mention} đã đăng ký thành công!",
-            ephemeral=False
+class DonationModal(ui.Modal):
+    def __init__(self, method: str):
+        super().__init__(title=f"Nạp qua {method}")
+        self.method = method
+        self.amount = ui.TextInput(
+            label="Số tiền (VND)",
+            placeholder="VD: 10000",
+            min_length=4,
+            max_length=10,
+            required=True
         )
-    
-    @ui.button(label="Bắt Đầu", emoji="🎮", style=discord.ButtonStyle.success, custom_id="start")
-    async def start_button(self, interaction: discord.Interaction, button: ui.Button):
-        """Start the game (host only)"""
-        # Check if user is host
-        if interaction.user.id != self.host_id:
-            await interaction.response.send_message(
-                f"❌ Chỉ <@{self.host_id}> (người tạo game) mới có thể bắt đầu!",
-                ephemeral=True
-            )
+        self.add_item(self.amount)
+
+    async def on_submit(self, interaction: discord.Interaction):
+        try:
+            amount_val = int(self.amount.value)
+        except ValueError:
+            await interaction.response.send_message("❌ Số tiền không hợp lệ. Vui lòng nhập số.", ephemeral=True)
             return
-        
-        # Check if enough players
-        if len(self.registered_players) < 1:
-            await interaction.response.send_message(
-                "❌ Cần ít nhất 1 người đăng ký để bắt đầu!",
-                ephemeral=True
-            )
+
+        if amount_val < config.MIN_DONATION_COINZ:
+            await interaction.response.send_message(f"❌ Số tiền tối thiểu là {config.MIN_DONATION_COINZ} VND.", ephemeral=True)
             return
+
+        coinz_reward = (amount_val // 1000) * config.COINZ_PER_1000VND
+        order_content = f"GUMZ {interaction.user.id}" 
         
-        # Mark game as started
-        self.game_started = True
+        params = {
+            'amount': amount_val,
+            'content': order_content,
+            'method': self.method,
+            'userId': interaction.user.id,
+            'userName': interaction.user.name
+        }
+        query_string = urllib.parse.urlencode(params)
+        payment_url = f"{config.DONATION_WEB_URL}/payment?{query_string}"
         
-        # Disable all buttons
-        for item in self.children:
-            item.disabled = True
+        embed = discord.Embed(
+            title="💳 Thanh Toán",
+            description=(
+                f"Bạn đã chọn nạp **{amount_val:,} VND** qua **{self.method}**.\n"
+                f"Sẽ nhận được: **{coinz_reward:,} Coinz**\n\n"
+                f"**Lưu ý:**\n"
+                f"1. Nội dung chuyển khoản phải chính xác: `{order_content}`\n"
+                f"2. Sau khi thanh toán thành công, vui lòng chờ 1-3 phút để hệ thống xử lý."
+            ),
+            color=config.COLOR_INFO,
+            timestamp=datetime.datetime.now()
+        )
+        embed.set_thumbnail(url=interaction.user.avatar.url if interaction.user.avatar else None)
         
-        # Update message
-        embed = interaction.message.embeds[0]
-        embed.color = discord.Color.green()
-        embed.title = "✅ Game Đang Bắt Đầu..."
+        # Create a view with a link button
+        view = ui.View()
+        view.add_item(ui.Button(label="Thanh Toán Ngay", url=payment_url, style=discord.ButtonStyle.link, emoji="💸"))
         
-        await interaction.response.edit_message(embed=embed, view=self)
-        
-        # Stop the view
-        self.stop()
-    
-    @ui.button(label="Hủy", emoji="❌", style=discord.ButtonStyle.danger, custom_id="cancel")
-    async def cancel_button(self, interaction: discord.Interaction, button: ui.Button):
-        """Cancel the game (host only)"""
-        if interaction.user.id != self.host_id:
-            await interaction.response.send_message(
-                f"❌ Chỉ <@{self.host_id}> (người tạo game) mới có thể hủy!",
-                ephemeral=True
-            )
-            return
-        
-        # Disable all buttons
-        for item in self.children:
-            item.disabled = True
-        
-        # Update message
-        embed = interaction.message.embeds[0]
-        embed.color = discord.Color.red()
-        embed.title = "❌ Game Đã Bị Hủy"
-        
-        await interaction.response.edit_message(embed=embed, view=self)
-        
-        # Stop the view
-        self.stop()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+class DonationView(ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @ui.button(label="MOMO", style=discord.ButtonStyle.primary, emoji=emojis.EMOJI_MOMO_PAY if hasattr(emojis, 'EMOJI_MOMO_PAY') else "💸", row=0)
+    async def momo_button(self, interaction: discord.Interaction, button: ui.Button):
+        await interaction.response.send_modal(DonationModal(method="MOMO"))
+
+    @ui.button(label="VNPAY", style=discord.ButtonStyle.primary, emoji="💳", row=0)
+    async def vnpay_button(self, interaction: discord.Interaction, button: ui.Button):
+        await interaction.response.send_modal(DonationModal(method="VNPAY"))
+
+    @ui.button(label="VIETQR", style=discord.ButtonStyle.success, emoji="🏦", row=1)
+    async def vietqr_button(self, interaction: discord.Interaction, button: ui.Button):
+        await interaction.response.send_modal(DonationModal(method="VIETQR"))
+
+    @ui.button(label="ZYPAGE", style=discord.ButtonStyle.secondary, emoji="🌐", row=1)
+    async def zypage_button(self, interaction: discord.Interaction, button: ui.Button):
+        await interaction.response.send_modal(DonationModal(method="ZYPAGE"))

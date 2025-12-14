@@ -4,6 +4,7 @@ from discord import app_commands
 import platform
 import datetime
 from utils import emojis
+from utils.views import DonationView
 import config
 
 class HelpView(discord.ui.View):
@@ -36,8 +37,9 @@ class HelpView(discord.ui.View):
         min_values=1,
         max_values=1,
         options=[
+            discord.SelectOption(label="Hướng Dẫn Tân Thủ", description="Cách chơi & Kiếm Coinz", emoji="📘"),
             discord.SelectOption(label="Games Commands", description="Word Chain, Vua Tiếng Việt, Bầu Cua", emoji="🎮"),
-            discord.SelectOption(label="Leaderboard Commands", description="View rankings", emoji="🏆"),
+            discord.SelectOption(label="Leaderboard Commands", description="Xem rank", emoji="🏆"),
             discord.SelectOption(label="Admin Commands", description="Admin tools", emoji="🛡️"),
             discord.SelectOption(label="Utility Commands", description="Bot info & others", emoji="🛠️"),
             discord.SelectOption(label="Donation", description="Support the bot", emoji=emojis.EMOJI_MOMO_PAY),
@@ -52,7 +54,44 @@ class HelpView(discord.ui.View):
             timestamp=datetime.datetime.now()
         )
         
-        if choice == "Games Commands":
+        if choice == "Hướng Dẫn Tân Thủ":
+            embed.description = "Chào mừng bạn đến với **Marble Soda**! Dưới đây là hướng dẫn cơ bản:"
+            
+            embed.add_field(
+                name="🎮 **Cách Bắt Đầu**",
+                value=(
+                    "1. **Tìm Kênh Game**: Bot chỉ hoạt động ở các kênh được cấu hình.\n"
+                    "   (Nếu chưa có, nhờ Admin dùng lệnh `/set-game-channel`)\n"
+                    "2. **Bắt Đầu**: Gõ `/start` tại kênh game tương ứng (Nối Từ, Bầu Cua...)\n"
+                    "3. **Kết Thúc**: Gõ `/stop` để dừng game và nhận thưởng."
+                ),
+                inline=False
+            )
+            
+            embed.add_field(
+                name="💰 **Bí Kíp Kiếm Coinz**",
+                value=(
+                    "Coinz là đơn vị tiền tệ chính để chơi game và đua top.\n\n"
+                    "**1. Chơi Nối Từ (Word Chain):**\n"
+                    "   • Trả lời đúng: **+10 coinz**\n"
+                    "   • Bonus Tốc độ: **+20 ~ 100 coinz** (Trả lời càng nhanh càng nhiều tiền)\n"
+                    "   • Bonus Từ dài/khó: Nhận thêm thưởng!\n\n"
+                    "**2. Vua Tiếng Việt:**\n"
+                    "   • Giải mã từ khóa thành công: **Hàng nghìn coinz** (Tùy độ khó)\n\n"
+                    "**3. Bầu Cua Tôm Cá:**\n"
+                    "   • Thử vận may đặt cược để nhân đôi, nhân ba tài sản!\n\n"
+                    "**4. Donation:**\n"
+                    "   • Nạp coinz qua `/donation` để nhận ưu đãi cực khủng."
+                ),
+                inline=False
+            )
+            embed.add_field(
+                name="⚠️ **Lưu Ý**",
+                value="• Spam, cheat sẽ bị reset coinz hoặc ban khỏi hệ thống.",
+                inline=False
+            )
+
+        elif choice == "Games Commands":
             embed.description = "Hướng dẫn chi tiết các trò chơi:"
             
             # Word Chain Info
@@ -65,13 +104,13 @@ class HelpView(discord.ui.View):
                     f"  `/stop` - Dừng game (Kết thúc & trao giải)\n"
                     f"  `/challenge-bot` - ⚔️ Thách đấu Bot (Solo)\n"
                     f"• **Hỗ trợ**:\n"
-                    f"  `/hint` - Gợi ý nhận ký tự tiếp theo ({config.HINT_COST} coinz)\n"
-                    f"  `/pass` - Bỏ lượt an toàn ({config.PASS_COST} coinz)\n"
+                    f"  `/hint` - Gợi ý nhận ký tự tiếp theo ({config.HINT_COST} Coinz)\n"
+                    f"  `/pass` - Bỏ lượt an toàn ({config.PASS_COST} Coinz)\n"
                     f"• **Điểm Thưởng & Phạt**:\n"
-                    f"  ✅ **Đúng**: +10 coinz (+Bonus Level/Từ dài)\n"
+                    f"  ✅ **Đúng**: +10 Coinz (+Bonus Level/Từ dài)\n"
                     f"  ⚡ **Tốc độ**: <5s (+100), <10s (+50), <20s (+20)\n"
-                    f"  ❌ **Sai**: -2 coinz/lần (Tối đa 5 lần/lượt)\n"
-                    f"  🐌 **Timeout**: -10 coinz (Mất lượt)"
+                    f"  ❌ **Sai**: -2 Coinz/lần (Tối đa 5 lần/lượt)\n"
+                    f"  🐌 **Timeout**: -10 Coinz (Mất lượt)"
                 ),
                 inline=False
             )
@@ -85,19 +124,19 @@ class HelpView(discord.ui.View):
                     f"  `/start` - Bắt đầu game tại kênh VTV\n"
                     f"  `/stop` - Dừng game\n"
                     f"• **Cách chơi**: Gõ đáp án trực tiếp vào chat.\n"
-                    f"• **Phần thưởng**: Từ {config.POINTS_VUA_TIENG_VIET:,} đến {config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,} coinz (Tùy độ khó)!"
+                    f"• **Phần thưởng**: Từ {config.POINTS_VUA_TIENG_VIET:,} đến {config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,} Coinz (Tùy độ khó)!"
                 ),
                 inline=False
             )
 
             # Bau Cua Info
             embed.add_field(
-                name="🎲 **Bầu Cua Tôm Cá (Space Edition)**",
+                name="🎲 **Bầu Cua Tôm Cá**",
                 value=(
                     f"• **Luật chơi**: Đặt cược vào 6 cửa (Nai, Bầu, Mèo, Cá, Cua, Tôm).\n"
                     f"• **Lệnh**:\n"
                     f"  `/start` - Bắt đầu game tại kênh Bầu Cua\n"
-                    f"• **Cách chơi**: Dùng các nút bấm để đặt cược (Max 500k/lần).\n"
+                    f"• **Cách chơi**: Dùng các nút bấm để đặt cược (Không giới hạn số tiền).\n"
                     f"• **Tỷ lệ thắng**: x1, x2, x3 tùy số mặt xúc xắc xuất hiện."
                 ),
                 inline=False
@@ -130,10 +169,11 @@ class HelpView(discord.ui.View):
             embed.add_field(
                 name="💰 **Quản Lý Coinz/Stats**",
                 value=(
-                    "`/add-coinz [user] [amount]` - Cộng coinz\n"
-                    "`/subtract-coinz [user] [amount]` - Trừ coinz\n"
-                    "`/reset-coinz [user]` - Set coinz về 0\n"
-                    "`/reset-stats [user]` - Reset toàn bộ chỉ số game"
+                    "`/add-coinz [user] [amount]` - Cộng coinz (Chỉ dành cho admin)\n"
+                    "`/subtract-coinz [user] [amount]` - Trừ coinz (Chỉ dành cho admin)\n"
+                    "`/chuyen-coinz [user] [amount]` - Chuyển coinz\n"
+                    "`/reset-coinz [user]` - Set coinz về 0 (Chỉ dành cho admin)\n"
+                    "`/reset-stats [user]` - Reset toàn bộ chỉ số game (Chỉ dành cho admin)"
                 ),
                 inline=False
             )
@@ -149,6 +189,32 @@ class HelpView(discord.ui.View):
                 ),
                 inline=False
             )
+
+        elif choice == "Donation":
+            embed.title = "💎 NẠP COINZ - ỦNG HỘ SERVER"
+            embed.description = (
+                "Chào mừng bạn đến với hệ thống nạp Coinz tự động 24/7!\n\n"
+                "**🎁 QUYỀN LỢI KHI NẠP COINZ:**\n"
+                "✨ Tham gia các minigame giải trí\n"
+                "✨ Đua Top Tỷ Phú Server\n"
+                "✨ Mua các vật phẩm/quyền lợi (sắp ra mắt)\n"
+                "❤️ Góp phần duy trì Bot hoạt động ổn định\n\n"
+                "**💰 TỶ GIÁ QUY ĐỔI:**\n"
+                f"💵 `1,000 VND` = `{config.COINZ_PER_1000VND:,} Coinz` {emojis.ANIMATED_EMOJI_COINZ}\n"
+                f"🔥 **Khuyến mãi:** Tặng thêm 10% khi nạp trên 50k!\n\n"
+                "**💳 PHƯƠNG THỨC THANH TOÁN:**\n"
+                "1. **MOMO** - Ví điện tử thông dụng\n"
+                "2. **VNPAY** - Quét mã tiện lợi\n"
+                "3. **VIETQR** - Chuyển khoản mọi ngân hàng (MB, VCB...)\n"
+                "4. **ZYPAGE** - Cổng thanh toán đa năng\n\n"
+                "👇 **Chọn phương thức thanh toán bên dưới để bắt đầu:**"
+            )
+            embed.color = config.COLOR_GOLD
+            embed.set_thumbnail(url="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExbmZpbHRmaXZ4b3J5YWR4aGZ4eXF4aGZ4eXF4aGZ4eXF4aGZ4eXF4aGZ4eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/LdOyjZ7io5Msw/giphy.gif")
+            embed.set_footer(text="Hệ thống xử lý tự động trong 1-3 phút • Cảm ơn bạn đã ủng hộ!")
+            embed.set_image(url="https://media.discordapp.net/attachments/1110839734893363271/1175511198036000899/line_rainbow.gif")
+            await interaction.response.send_message(embed=embed, view=DonationView(), ephemeral=True)
+            return
             
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
@@ -176,7 +242,8 @@ class Help(commands.Cog):
             f"{emojis.BAR} {emojis.ANIMATED_EMOJI_DOT} Games Commands\n"
             f"{emojis.BAR} {emojis.ANIMATED_EMOJI_DOT} Leaderboard Commands\n"
             f"{emojis.BAR} {emojis.ANIMATED_EMOJI_DOT} Admin Commands\n"
-            f"{emojis.BAR} {emojis.ANIMATED_EMOJI_DOT} Utility Commands"
+            f"{emojis.BAR} {emojis.ANIMATED_EMOJI_DOT} Utility Commands\n"
+            f"{emojis.BAR} {emojis.ANIMATED_EMOJI_DOT} Donation"
         )
             
         embed.add_field(

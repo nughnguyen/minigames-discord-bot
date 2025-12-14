@@ -139,7 +139,7 @@ class AdminCog(commands.Cog):
         await self.db.add_points(user.id, interaction.guild_id, points)
         
         await interaction.response.send_message(
-            f"✅ Đã thêm **{points}** coinz cho {user.mention}!",
+            f"✅ Đã thêm **{points}** Coinz {emojis.ANIMATED_EMOJI_COINZ} cho {user.mention}!",
             ephemeral=True
         )
     
@@ -206,7 +206,7 @@ class AdminCog(commands.Cog):
             
         await interaction.response.send_message(message, ephemeral=True)
 
-    @app_commands.command(name="remove-coinz", description="➖ Trừ coinz của người chơi (Admin only)")
+    @app_commands.command(name="subtract-coinz", description="➖ Trừ coinz của người chơi (Admin only)")
     @app_commands.describe(
         user="Người chơi bị trừ coinz",
         points="Số coinz cần trừ"
@@ -220,7 +220,7 @@ class AdminCog(commands.Cog):
     ):
         """Admin trừ coinz của người chơi"""
         if points <= 0:
-            await interaction.response.send_message("❌ Số coinz trừ phải lớn hơn 0!", ephemeral=True)
+            await interaction.response.send_message("❌ Số Coinz trừ phải lớn hơn 0!", ephemeral=True)
             return
 
         # Simply add negative points using existing db method
@@ -228,7 +228,7 @@ class AdminCog(commands.Cog):
         await self.db.add_points(user.id, interaction.guild_id, -points)
         
         await interaction.response.send_message(
-            f"✅ Đã trừ **{points}** coinz của {user.mention}!",
+            f"✅ Đã trừ **{points}** Coinz của {user.mention}!",
             ephemeral=True
         )
 
@@ -236,7 +236,8 @@ class AdminCog(commands.Cog):
     @app_commands.describe(game_type="Chọn loại game (để trống để xóa cài đặt)")
     @app_commands.choices(game_type=[
         app_commands.Choice(name="🔤 Nối Từ (Word Chain)", value="wordchain"),
-        app_commands.Choice(name="👑 Vua Tiếng Việt", value="vuatiengviet")
+        app_commands.Choice(name="👑 Vua Tiếng Việt", value="vuatiengviet"),
+        app_commands.Choice(name="🎲 Bầu Cua Tôm Cá", value="baucuatomca"),
     ])
     @app_commands.checks.has_permissions(administrator=True)
     async def set_game_channel(self, interaction: discord.Interaction, game_type: app_commands.Choice[str] = None):

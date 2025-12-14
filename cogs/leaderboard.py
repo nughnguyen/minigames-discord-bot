@@ -74,7 +74,7 @@ class LeaderboardCog(commands.Cog):
         
         embed.add_field(
             name="🏆 Tổng Coinz",
-            value=f"**{total_points:,}** coinz {emojis.ANIMATED_EMOJI_COINZ}",
+            value=f"**{total_points:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}",
             inline=True
         )
 
@@ -237,7 +237,7 @@ class LeaderboardCog(commands.Cog):
         # Response
         embed = discord.Embed(
             title="📅 Điểm danh hàng ngày",
-            description=f"Bạn đã nhận được **{reward:,}** coinz!",
+            description=f"Bạn đã nhận được **{reward:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}",
             color=config.COLOR_SUCCESS
         )
         if new_streak > 1:

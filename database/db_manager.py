@@ -340,6 +340,41 @@ class DatabaseManager:
             ) as cursor:
                 row = await cursor.fetchone()
                 return row[0] if row else 0
+
+    async def transfer_points(self, from_user_id: int, to_user_id: int, amount: int) -> bool:
+        """Chuyển điểm giữa 2 người chơi"""
+        if amount <= 0:
+            return False
+            
+        async with aiosqlite.connect(self.db_path) as db:
+            # Check balance
+            async with db.execute(
+                "SELECT total_points FROM player_stats WHERE user_id = ? AND guild_id = 0",
+                (from_user_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+                current_balance = row[0] if row else 0
+                
+            if current_balance < amount:
+                return False
+                
+            # Deduct from sender
+            await db.execute("""
+                UPDATE player_stats 
+                SET total_points = total_points - ? 
+                WHERE user_id = ? AND guild_id = 0
+            """, (amount, from_user_id))
+            
+            # Add to receiver
+            await db.execute("""
+                INSERT INTO player_stats (user_id, guild_id, total_points)
+                VALUES (?, 0, ?)
+                ON CONFLICT(user_id, guild_id) DO UPDATE SET
+                    total_points = total_points + ?
+            """, (to_user_id, amount, amount))
+            
+            await db.commit()
+            return True
     
     async def get_leaderboard(self, member_ids: List[int], limit: int = 10) -> List[Dict]:
         """Lấy bảng xếp hạng top tỷ phú trong danh sách user_id được cung cấp (global points)"""
