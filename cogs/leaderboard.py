@@ -6,7 +6,7 @@ from discord.ext import commands
 from discord import app_commands
 
 import config
-from utils import embeds
+from utils import embeds, emojis
 from database.db_manager import DatabaseManager
 
 
@@ -61,6 +61,7 @@ class LeaderboardCog(commands.Cog):
         wrong_words = stats['wrong_words']
         longest_word = stats['longest_word']
         longest_word_length = stats['longest_word_length']
+        daily_streak = stats.get('daily_streak', 0)
         
         accuracy = (correct_words / words_submitted * 100) if words_submitted > 0 else 0
         
@@ -74,6 +75,12 @@ class LeaderboardCog(commands.Cog):
         embed.add_field(
             name="🏆 Tổng Coinz",
             value=f"**{total_points:,}** coinz {emojis.ANIMATED_EMOJI_COINZ}",
+            inline=True
+        )
+
+        embed.add_field(
+            name="📅 Daily Streak",
+            value=f"**{daily_streak}** ngày {emojis.STREAK}",
             inline=True
         )
         

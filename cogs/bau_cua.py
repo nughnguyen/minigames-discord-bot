@@ -93,10 +93,11 @@ class BauCuaView(discord.ui.View):
         ]
 
         # Add betting buttons
-        for side in self.sides:
+        for i, side in enumerate(self.sides):
             btn = discord.ui.Button(
                 style=discord.ButtonStyle.secondary,
                 emoji=side['emoji'],
+                label=f" {side['name']} ", # Add spaces for width
                 custom_id=side['id'],
                 row=0 if self.sides.index(side) < 3 else 1
             )
@@ -210,12 +211,12 @@ class BauCuaCog(commands.Cog):
         self.bot = bot
         self.db = db
         self.sides_map = {
-            "Alien": emojis.SIDE_1,
-            "Star": emojis.SIDE_2,
-            "Rocket": emojis.SIDE_3,
-            "Planet": emojis.SIDE_4,
-            "Galaxy": emojis.SIDE_5,
-            "Comet": emojis.SIDE_6
+            "Nai": emojis.SIDE_1,
+            "Bầu": emojis.SIDE_2,
+            "Mèo": emojis.SIDE_3,
+            "Cá": emojis.SIDE_4,
+            "Cua": emojis.SIDE_5,
+            "Tôm": emojis.SIDE_6
         }
         self.sides_list = list(self.sides_map.keys())
         self.emoji_list = [emojis.SIDE_1, emojis.SIDE_2, emojis.SIDE_3, emojis.SIDE_4, emojis.SIDE_5, emojis.SIDE_6]

@@ -448,13 +448,18 @@ class DatabaseManager:
     async def get_player_stats(self, user_id: int, guild_id: int) -> Optional[Dict]:
         """Lấy thống kê chi tiết của người chơi (kết hợp local stats và global points)"""
         async with aiosqlite.connect(self.db_path) as db:
-            # 1. Get Global Points
+            # 1. Get Global Points and Daily Streak
             async with db.execute(
-                "SELECT total_points FROM player_stats WHERE user_id = ? AND guild_id = 0",
+                "SELECT total_points, daily_streak FROM player_stats WHERE user_id = ? AND guild_id = 0",
                 (user_id,)
             ) as cursor:
                 point_row = await cursor.fetchone()
-                total_points = point_row[0] if point_row else 0
+                if point_row:
+                    total_points = point_row[0]
+                    daily_streak = point_row[1] if point_row[1] is not None else 0
+                else:
+                    total_points = 0
+                    daily_streak = 0
 
             # 2. Get Local Stats
             async with db.execute("""
@@ -487,5 +492,6 @@ class DatabaseManager:
                 'correct_words': correct_words,
                 'wrong_words': wrong_words,
                 'longest_word': longest_word,
-                'longest_word_length': longest_word_length
+                'longest_word_length': longest_word_length,
+                'daily_streak': daily_streak
             }

@@ -36,10 +36,11 @@ class HelpView(discord.ui.View):
         min_values=1,
         max_values=1,
         options=[
-            discord.SelectOption(label="Games Commands", description="Word Chain, Vua Tiếng Việt", emoji="🎮"),
+            discord.SelectOption(label="Games Commands", description="Word Chain, Vua Tiếng Việt, Bầu Cua", emoji="🎮"),
             discord.SelectOption(label="Leaderboard Commands", description="View rankings", emoji="🏆"),
             discord.SelectOption(label="Admin Commands", description="Admin tools", emoji="🛡️"),
             discord.SelectOption(label="Utility Commands", description="Bot info & others", emoji="🛠️"),
+            discord.SelectOption(label="Donation", description="Support the bot", emoji=emojis.EMOJI_MOMO_PAY),
         ]
     )
     async def select_callback(self, interaction: discord.Interaction, select: discord.ui.Select):
@@ -61,15 +62,16 @@ class HelpView(discord.ui.View):
                     f"• **Luật chơi**: Nối tiếp từ bắt đầu bằng chữ cái cuối của từ trước.\n"
                     f"• **Lệnh**:\n"
                     f"  `/start` - Bắt đầu game\n"
-                    f"  `/stop` - Dừng game\n"
-                    f"  `/challenge-bot` - ⚔️ Thách đấu Bot\n"
+                    f"  `/stop` - Dừng game (Kết thúc & trao giải)\n"
+                    f"  `/challenge-bot` - ⚔️ Thách đấu Bot (Solo)\n"
                     f"• **Hỗ trợ**:\n"
-                    f"  `/hint` - Gợi ý ({config.HINT_COST} coinz)\n"
-                    f"  `/pass` - Bỏ lượt ({config.PASS_COST} coinz)\n"
-                    f"• **Điểm Score**:\n"
-                    f"  Đúng: +{config.POINTS_CORRECT} | Từ dài: +{config.POINTS_LONG_WORD}\n"
-                    f"  Tốc độ: +100 (5s) / +50 (10s) / +20 (20s)\n"
-                    f"  Timeout: {config.POINTS_TIMEOUT} | Sai: {config.POINTS_WRONG}"
+                    f"  `/hint` - Gợi ý nhận ký tự tiếp theo ({config.HINT_COST} coinz)\n"
+                    f"  `/pass` - Bỏ lượt an toàn ({config.PASS_COST} coinz)\n"
+                    f"• **Điểm Thưởng & Phạt**:\n"
+                    f"  ✅ **Đúng**: +10 coinz (+Bonus Level/Từ dài)\n"
+                    f"  ⚡ **Tốc độ**: <5s (+100), <10s (+50), <20s (+20)\n"
+                    f"  ❌ **Sai**: -2 coinz/lần (Tối đa 5 lần/lượt)\n"
+                    f"  🐌 **Timeout**: -10 coinz (Mất lượt)"
                 ),
                 inline=False
             )
@@ -92,22 +94,22 @@ class HelpView(discord.ui.View):
             embed.add_field(
                 name="🎲 **Bầu Cua Tôm Cá (Space Edition)**",
                 value=(
-                    f"• **Luật chơi**: Đặt cược vào 6 cửa (Alien, Star, Rocket, Planet, Galaxy, Comet).\n"
+                    f"• **Luật chơi**: Đặt cược vào 6 cửa (Nai, Bầu, Mèo, Cá, Cua, Tôm).\n"
                     f"• **Lệnh**:\n"
                     f"  `/start` - Bắt đầu game tại kênh Bầu Cua\n"
-                    f"• **Cách chơi**: Dùng các nút bấm để đặt cược (Max 500k).\n"
-                    f"• **Tỷ lệ thắng**: Hoàn tiền cược + (Tiền cược x Số mặt xuất hiện)."
+                    f"• **Cách chơi**: Dùng các nút bấm để đặt cược (Max 500k/lần).\n"
+                    f"• **Tỷ lệ thắng**: x1, x2, x3 tùy số mặt xúc xắc xuất hiện."
                 ),
                 inline=False
             )
 
         elif choice == "Leaderboard Commands":
-            embed.description = "xem bảng xếp hạng người chơi:"
+            embed.description = "Xem bảng xếp hạng người chơi:"
             embed.add_field(
                 name="📊 **Thống Kê**",
                 value=(
                     "`/leaderboard` - Xem Top Server\n"
-                    "`/stats [user]` - Xem thông tin cá nhân"
+                    "`/stats [user]` - Xem thông tin cá nhân (Rank, Coinz, WinRate...)"
                 ),
                 inline=False
             )
@@ -128,8 +130,10 @@ class HelpView(discord.ui.View):
             embed.add_field(
                 name="💰 **Quản Lý Coinz/Stats**",
                 value=(
-                    "`/add-coinz` - Cộng coinz\n"
-                    "`/reset-stats` - Reset thông tin người chơi"
+                    "`/add-coinz [user] [amount]` - Cộng coinz\n"
+                    "`/subtract-coinz [user] [amount]` - Trừ coinz\n"
+                    "`/reset-coinz [user]` - Set coinz về 0\n"
+                    "`/reset-stats [user]` - Reset toàn bộ chỉ số game"
                 ),
                 inline=False
             )
@@ -141,7 +145,7 @@ class HelpView(discord.ui.View):
                 value=(
                     f"• **Developer**: Quốc Hưng\n"
                     f"• **Prefix**: `{config.COMMAND_PREFIX}`\n"
-                    f"• **Version**: 2.1.0"
+                    f"• **Version**: 2.2.0"
                 ),
                 inline=False
             )

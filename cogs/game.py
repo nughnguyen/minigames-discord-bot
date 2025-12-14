@@ -71,14 +71,14 @@ class GameCog(commands.Cog):
         
         if await self.db.is_game_active(interaction.channel_id):
             await interaction.response.send_message(
-                f"{emojis.WRONG} Đã có game đang chơi!",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Đã có game đang chơi!",
                 ephemeral=True
             )
             return
         
         if lang not in self.validators:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Ngôn ngữ '{lang}' chưa được hỗ trợ!",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Ngôn ngữ '{lang}' chưa được hỗ trợ!",
                 ephemeral=True
             )
             return
@@ -208,7 +208,7 @@ class GameCog(commands.Cog):
         game_state = await self.db.get_game_state(interaction.channel_id)
         if not game_state:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Không có game nào đang chơi!",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Không có game nào đang chơi!",
                 ephemeral=True
             )
             return
@@ -268,7 +268,7 @@ class GameCog(commands.Cog):
         
         if not game_state:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Không có game nào đang chơi!",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Không có game nào đang chơi!",
                 ephemeral=True
             )
             return
@@ -291,7 +291,7 @@ class GameCog(commands.Cog):
         
         if not game_state:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Không có game nào đang chơi!",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Không có game nào đang chơi!",
                 ephemeral=True
             )
             return
@@ -300,7 +300,7 @@ class GameCog(commands.Cog):
         points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
         if points < config.HINT_COST:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Bạn không đủ coinz! Cần {config.HINT_COST} coinz, bạn chỉ có {points} coinz.",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ coinz! Cần {config.HINT_COST} coinz, bạn chỉ có {points} coinz {emojis.ANIMATED_EMOJI_COINZ}",
                 ephemeral=True
             )
             return
@@ -324,7 +324,7 @@ class GameCog(commands.Cog):
         
         if not game_state:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Không có game nào đang chơi!",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Không có game nào đang chơi!",
                 ephemeral=True
             )
             return
@@ -332,7 +332,7 @@ class GameCog(commands.Cog):
         # Kiểm tra có phải lượt của người này không
         if game_state['current_player_id'] != interaction.user.id:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Không phải lượt của bạn!",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Không phải lượt của bạn!",
                 ephemeral=True
             )
             return
@@ -341,7 +341,7 @@ class GameCog(commands.Cog):
         points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
         if points < config.PASS_COST:
             await interaction.response.send_message(
-                f"{emojis.WRONG} Bạn không đủ coinz! Cần {config.PASS_COST} coinz, bạn chỉ có {points} coinz.",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ coinz! Cần {config.PASS_COST} coinz, bạn chỉ có {points} coinz {emojis.ANIMATED_EMOJI_COINZ}",
                 ephemeral=True
             )
             return
@@ -367,7 +367,7 @@ class GameCog(commands.Cog):
         
         # Thông báo
         await interaction.response.send_message(
-            f"{emojis.PASS} {interaction.user.mention} đã bỏ lượt! (-{config.PASS_COST} coinz)\n"
+            f"{emojis.PASS} {interaction.user.mention} đã bỏ lượt! (-{config.PASS_COST} coinz {emojis.ANIMATED_EMOJI_COINZ})\n"
             f"Lượt tiếp theo: {next_player.mention}"
         )
         
@@ -430,15 +430,15 @@ class GameCog(commands.Cog):
             if elapsed < 5:
                 # Siêu tốc (<5s) - 100% Base (100 points)
                 points += 100 
-                bonus_list.append(f"⚡ Siêu tốc! (+100)")
+                bonus_list.append(f"⚡ Siêu tốc! (+100 {emojis.ANIMATED_EMOJI_COINZ})")
             elif elapsed < 10:
                 # Nhanh (<10s) - 50% Base (50 points)
                 points += 50
-                bonus_list.append(f"🏃 Nhanh! (+50)")
+                bonus_list.append(f"🏃 Nhanh! (+50 {emojis.ANIMATED_EMOJI_COINZ})")
             elif elapsed < 20:
                 # Khá (<20s) - 20% Base (20 points)
                 points += 20
-                bonus_list.append(f"🙂 Khá! (+20)")
+                bonus_list.append(f"🙂 Khá! (+20 {emojis.ANIMATED_EMOJI_COINZ})")
         
         # Word Length/Advanced Bonus
         word_info = None
@@ -462,16 +462,16 @@ class GameCog(commands.Cog):
                 
                 if level_points > 0:
                     points += level_points
-                    bonus_list.append(f"📚 Level {level.upper()}! (+{level_points})")
+                    bonus_list.append(f"📚 Level {level.upper()}! (+{level_points} {emojis.ANIMATED_EMOJI_COINZ})")
             
             # Fallback to long word bonus if no level bonus was awarded
             if level_points == 0 and len(word) >= config.LONG_WORD_THRESHOLD:
                 points += config.POINTS_LONG_WORD # 200 points
-                bonus_list.append(f"📝 Từ dài! (+{config.POINTS_LONG_WORD})")
+                bonus_list.append(f"📝 Từ dài! (+{config.POINTS_LONG_WORD} {emojis.ANIMATED_EMOJI_COINZ})")
                 
         elif validator.is_long_word(word):
             points += config.POINTS_LONG_WORD # 20 points
-            bonus_list.append(f"{emojis.FIRE} Từ dài! (+{config.POINTS_LONG_WORD})")
+            bonus_list.append(f"{emojis.FIRE} Từ dài! (+{config.POINTS_LONG_WORD} {emojis.ANIMATED_EMOJI_COINZ})")
             
         bonus_reason = "\n".join(bonus_list)
         
@@ -515,7 +515,7 @@ class GameCog(commands.Cog):
             if not bot_word:
                 # Bot cannot find word - Player wins!
                 win_embed = discord.Embed(
-                    title=f"{emojis.CELEBRATION} Bạn Thắng!",
+                    title=f"{emojis.EMOJI_GIVEAWAY} Bạn Thắng!",
                     description=f"{emojis.ROBOT} Bot không tìm được từ nào tiếp theo!\n\n🏆 Chúc mừng!",
                     color=config.COLOR_GOLD
                 )
@@ -637,7 +637,7 @@ class GameCog(commands.Cog):
             # Gửi thông báo timeout
             embed = embeds.create_timeout_embed(player.mention)
             # Override description to show correct penalty
-            embed.description = f"{player.mention} {emojis.SNAIL} đã không trả lời kịp thời! (-{abs(config.POINTS_TIMEOUT)} coinz)"
+            embed.description = f"{player.mention} {emojis.SNAIL} đã không trả lời kịp thời! (-{abs(config.POINTS_TIMEOUT)} coinz {emojis.ANIMATED_EMOJI_COINZ})"
             await channel.send(embed=embed)
             
             # Chuyển lượt
@@ -705,7 +705,7 @@ class GameCog(commands.Cog):
             embed = embeds.create_wrong_answer_embed(
                 message.author.mention,
                 word,
-                f"{reason}\n⚠️ Bạn còn **{remaining}** lần thử. (Bị trừ {abs(penalty)} coinz)"
+                f"{reason}\n⚠️ Bạn còn **{remaining}** lần thử. (Bị trừ {abs(penalty)} coinz {emojis.ANIMATED_EMOJI_COINZ})"
             )
             await message.channel.send(embed=embed)
 

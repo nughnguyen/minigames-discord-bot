@@ -216,16 +216,16 @@ class VuaTiengVietCog(commands.Cog):
             
             await self.db.add_points(message.author.id, message.guild.id, points)
             
-            embed = discord.Embed(title="🎉 CHÚC MỪNG CHIẾN THẮNG!", color=0x00FF00)
+            embed = discord.Embed(title=f"{emojis.EMOJI_GIVEAWAY} CHÚC MỪNG CHIẾN THẮNG!", color=0x00FF00)
             embed.description = f"👑 {message.author.mention} đã trả lời chính xác!\n\nĐáp án: **{correct_answer}**"
             embed.add_field(name="Phần thưởng", value=f"{points:,} coinz {emojis.ANIMATED_EMOJI_COINZ}\n(Trừ gợi ý: -{current_base_points - points:,} coinz {emojis.ANIMATED_EMOJI_COINZ})", inline=False)
             
             if len(correct_answer) > 25:
-               embed.set_footer(text="🔥 CÂU HỎI *SIÊU KHÓ* > 25 KÝ TỰ: x10 QUỸ THƯỞNG (50,000)! 🔥")
+               embed.set_footer(text=f"🔥 CÂU HỎI *SIÊU KHÓ* > 25 KÝ TỰ: x10 QUỸ THƯỞNG ({config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,} coinz {emojis.ANIMATED_EMOJI_COINZ})")
             elif len(correct_answer) > 15:
-               embed.set_footer(text="🔥 CÂU HỎI *KHÓ* > 15 KÝ TỰ: QUỸ THƯỞNG 10,000! 🔥")
+               embed.set_footer(text=f"🔥 CÂU HỎI *KHÓ* > 15 KÝ TỰ: QUỸ THƯỞNG {config.POINTS_VUA_TIENG_VIET_KHO:,} coinz {emojis.ANIMATED_EMOJI_COINZ}")
             else:
-               embed.set_footer(text="Chuẩn bị câu tiếp theo trong 5 giây...")
+               embed.set_footer(text=f"Chuẩn bị câu tiếp theo trong 5 giây...")
             
             await message.channel.send(embed=embed)
             
