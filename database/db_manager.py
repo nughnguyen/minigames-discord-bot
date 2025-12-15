@@ -89,6 +89,19 @@ class DatabaseManager:
                     game_type TEXT NOT NULL
                 )
             """)
+
+            # Bảng fishing inventory
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS fishing_inventory (
+                    user_id INTEGER PRIMARY KEY,
+                    rod_type TEXT DEFAULT 'Plastic Rod',
+                    boat_type TEXT DEFAULT 'None',
+                    inventory TEXT DEFAULT '{}',
+                    upgrades TEXT DEFAULT '{}',
+                    stats TEXT DEFAULT '{}',
+                    last_fished TIMESTAMP
+                )
+            """)
             
             await db.commit()
             
@@ -530,3 +543,63 @@ class DatabaseManager:
                 'longest_word_length': longest_word_length,
                 'daily_streak': daily_streak
             }
+    # ===== FISHING GAME METHODS =====
+
+    async def get_fishing_data(self, user_id: int) -> Dict:
+        """Lấy dữ liệu câu cá của user"""
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute(
+                "SELECT rod_type, boat_type, inventory, upgrades, stats, last_fished FROM fishing_inventory WHERE user_id = ?",
+                (user_id,)
+            ) as cursor:
+                row = await cursor.fetchone()
+                
+                if not row:
+                    # Initialize default data
+                    return {
+                        'rod_type': 'Plastic Rod',
+                        'boat_type': 'None',
+                        'inventory': {},
+                        'upgrades': {},
+                        'stats': {'xp': 0, 'level': 1, 'money': 0}, # stats.money is separate from global points? Or sync?
+                        # The original script had its own money system.
+                        # But we should probably use the global points system for economy consistency.
+                        # Let's assume we use global points, but maybe stats tracks fishing-specific things like boosts.
+                        'last_fished': None
+                    }
+                
+                return {
+                    'rod_type': row[0],
+                    'boat_type': row[1],
+                    'inventory': json.loads(row[2]),
+                    'upgrades': json.loads(row[3]),
+                    'stats': json.loads(row[4]),
+                    'last_fished': row[5]
+                }
+
+    async def update_fishing_data(self, user_id: int, rod_type: str = None, boat_type: str = None, 
+                                  inventory: Dict = None, upgrades: Dict = None, stats: Dict = None):
+        """Cập nhật dữ liệu câu cá"""
+        import datetime
+        current_data = await self.get_fishing_data(user_id)
+        
+        # Merge changes
+        new_rod = rod_type if rod_type is not None else current_data['rod_type']
+        new_boat = boat_type if boat_type is not None else current_data['boat_type']
+        new_inventory = inventory if inventory is not None else current_data['inventory']
+        new_upgrades = upgrades if upgrades is not None else current_data['upgrades']
+        new_stats = stats if stats is not None else current_data['stats']
+        
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("""
+                INSERT INTO fishing_inventory (user_id, rod_type, boat_type, inventory, upgrades, stats, last_fished)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    rod_type = excluded.rod_type,
+                    boat_type = excluded.boat_type,
+                    inventory = excluded.inventory,
+                    upgrades = excluded.upgrades,
+                    stats = excluded.stats,
+                    last_fished = excluded.last_fished
+            """, (user_id, new_rod, new_boat, json.dumps(new_inventory), json.dumps(new_upgrades), json.dumps(new_stats)))
+            await db.commit()

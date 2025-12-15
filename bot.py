@@ -85,6 +85,7 @@ class WordChainBot(commands.Bot):
             'cogs.lobby',
             'cogs.help',
             'cogs.donation',
+            'cogs.cau_ca',
             'cogs.xep_hinh'
         ]
         
