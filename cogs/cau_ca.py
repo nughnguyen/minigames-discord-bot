@@ -39,7 +39,7 @@ BIOMES = {
         "name": "Đại Dương",
         "desc": "Biển cả mênh mông với những loài cá lớn.",
         "req_level": 5,
-        "req_money": 5000,
+        "req_money": 50000,
         "emoji": emojis.BIOME_OCEAN,
         "fish": [
             {"name": "Cá Nhiệt Đới", "base_value": 50, "min_size": 10, "max_size": 30, "emoji": emojis.FISH_TROPICAL},
@@ -54,7 +54,7 @@ BIOMES = {
         "name": "Vùng Trời",
         "desc": "Câu cá trên những đám mây.",
         "req_level": 10,
-        "req_money": 20000,
+        "req_money": 100000,
         "emoji": emojis.BIOME_SKY,
         "fish": [
             {"name": "Cá Cầu Vồng", "base_value": 800, "min_size": 30, "max_size": 100, "emoji": emojis.FISH_RAINBOW},
@@ -66,7 +66,7 @@ BIOMES = {
         "name": "Núi Lửa",
         "desc": "Nóng bỏng tay, cá nướng tại chỗ.",
         "req_level": 20,
-        "req_money": 50000,
+        "req_money": 500000,
         "emoji": emojis.BIOME_VOLCANIC,
         "fish": [
             {"name": "Cá Nóng", "base_value": 1500, "min_size": 30, "max_size": 80, "emoji": emojis.FISH_HOTCOD},
@@ -78,7 +78,7 @@ BIOMES = {
         "name": "Vũ Trụ",
         "desc": "Không trọng lực, cá siêu hiếm.",
         "req_level": 40,
-        "req_money": 100000,
+        "req_money": 10000000,
         "emoji": emojis.BIOME_SPACE,
         "fish": [
             {"name": "Cá Vũ Trụ", "base_value": 8000, "min_size": 100, "max_size": 300, "emoji": emojis.FISH_SPACE},
@@ -90,7 +90,7 @@ BIOMES = {
         "name": "Hành Tinh Lạ",
         "desc": "Những sinh vật bí ẩn từ thế giới khác.",
         "req_level": 60,
-        "req_money": 500000,
+        "req_money": 50000000,
         "emoji": emojis.BIOME_ALIEN,
         "fish": [
             {"name": "Cá Ngoài Hành Tinh", "base_value": 25000, "min_size": 100, "max_size": 400, "emoji": emojis.FISH_ALIEN},
@@ -295,14 +295,45 @@ class ShopSelectView(discord.ui.View):
 
 
 class ConfirmUnlockView(discord.ui.View):
-    def __init__(self, cog, user_id, biome_key, cost, parent_view):
+    def __init__(self, cog, user_id, biome_key, cost):
         super().__init__(timeout=60)
         self.cog = cog
         self.user_id = user_id
         self.biome_key = biome_key
         self.cost = cost
-        self.parent_view = parent_view
-        self.value = None
+
+    @discord.ui.button(label="Xác Nhận Mở Khóa", style=discord.ButtonStyle.success, emoji="🔓")
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user.id != self.user_id: return
+        
+        # Re-check money
+        bal = await self.cog.db.get_player_points(self.user_id, interaction.guild_id)
+        if bal < self.cost:
+             await interaction.response.send_message(f"❌ Bạn không đủ tiền! Cần {self.cost:,} Coiz.", ephemeral=True)
+             return
+
+        await self.cog.db.add_points(self.user_id, interaction.guild_id, -self.cost)
+        
+        # Update unlock data
+        data = await self.cog.db.get_fishing_data(self.user_id)
+        stats = data.get("stats", {})
+        unlocked = stats.get("unlocked_biomes", ["River"])
+        
+        if self.biome_key not in unlocked:
+            unlocked.append(self.biome_key)
+            stats["unlocked_biomes"] = unlocked
+        
+        # Move to new biome
+        stats["current_biome"] = self.biome_key
+        await self.cog.db.update_fishing_data(self.user_id, stats=stats)
+
+        b_info = BIOMES[self.biome_key]
+        await interaction.response.edit_message(content=f"🎉 Đã mở khóa và chuyển đến **{b_info['emoji']} {b_info['name']}**!", view=None, embed=None)
+
+    @discord.ui.button(label="Hủy", style=discord.ButtonStyle.danger, emoji="✖️")
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+         if interaction.user.id != self.user_id: return
+         await interaction.response.edit_message(content="❌ Đã hủy mở khóa.", view=None, embed=None)
 
 class BiomeSelect(discord.ui.Select):
     def __init__(self, options):
@@ -1302,16 +1333,21 @@ class CauCaCog(commands.Cog):
                 if curr_level < req_level:
                     await interaction.response.send_message(f"❌ Bạn chưa đủ Level {req_level} để mở khóa!", ephemeral=True)
                     return
-                if u_bal < cost:
-                    await interaction.response.send_message(f"❌ Bạn không đủ {cost:,} Coinz để mở khóa!", ephemeral=True)
-                    return
+                # Show confirmation regardless of money (or check money here too?)
+                # User asked: "if level is enough, show confirm button to use money"
+                # It's better to verify money first to avoid disappointment, but let's follow logic:
+                # Check money inside View or before? 
+                # Let's check money here to give immediate feedback if too poor, 
+                # BUT request says "confirm to use money", implying the choice happens then.
+                # I will show the view if Level is met. The view handles money check.
                 
-                await self.db.add_points(interaction.user.id, interaction.guild_id, -cost)
-                u.append(biome_key)
-                s["unlocked_biomes"] = u
-                s["current_biome"] = biome_key
-                await self.db.update_fishing_data(interaction.user.id, stats=s)
-                await interaction.response.send_message(f"🎉 Đã mở khóa và chuyển đến **{target['emoji']} {target['name']}**!", ephemeral=True)
+                view_confirm = ConfirmUnlockView(self, interaction.user.id, biome_key, cost)
+                msg_txt = f"🔓 **MỞ KHÓA VÙNG MỚI**\nBạn có muốn dùng **{cost:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ} để mở khóa **{target['emoji']} {target['name']}** không?"
+                
+                if interaction.response.is_done():
+                    await interaction.followup.send(msg_txt, view=view_confirm, ephemeral=True)
+                else:
+                    await interaction.response.send_message(msg_txt, view=view_confirm, ephemeral=True)
 
         select = discord.ui.Select(placeholder="Chọn khu vực để đi...")
         
