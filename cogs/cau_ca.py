@@ -654,11 +654,11 @@ class InventorySelect(discord.ui.Select):
             if fish_inv:
                 fish_list = []
                 total_val = 0
+                total_count = 0
                 for name, info in fish_inv.items():
                     count = info.get("count", 0)
                     val_fish = info.get("total_value", 0)
                     
-                    # Look up fish emoji from Biomes data by name
                     emoji_icon = "🐟"
                     for b_key, b_val in BIOMES.items():
                          for f in b_val["fish"]:
@@ -668,9 +668,17 @@ class InventorySelect(discord.ui.Select):
                          if emoji_icon != "🐟": break
                     
                     if count > 0:
-                        fish_list.append(f"• {emoji_icon} **{name}**: x{count} (Tổng: {val_fish:,} Coiz {emojis.ANIMATED_EMOJI_COIZ})")
+                        fish_list.append(f"• {emoji_icon} **{name}**: x{count} ({val_fish:,})")
                         total_val += val_fish
-                embed.add_field(name=f"🐟 Cá ({total_val:,} Coiz {emojis.ANIMATED_EMOJI_COIZ})", value="\n".join(fish_list) if fish_list else "Trống", inline=False)
+                        total_count += count
+                
+                fish_text = "\n".join(fish_list) if fish_list else "Trống"
+                if len(fish_text) > 1000:
+                    lines = fish_list[:15]
+                    remaining = len(fish_list) - 15
+                    fish_text = "\n".join(lines) + f"\n... và {remaining} loại cá khác"
+                
+                embed.add_field(name=f"🐟 Cá: {total_count} con ({total_val:,} Coinz)", value=fish_text, inline=False)
             else:
                 embed.description = "Thùng cá trống rỗng."
 
