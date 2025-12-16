@@ -162,9 +162,9 @@ TREASURES = [
 ]
 
 CHARMS = {
-    "Lucky Charm": {"name": "Bùa May Mắn", "price": 5000, "power": 0, "luck": 50, "duration_min": 10, "duration_max": 30, "emoji": "🍀"},
-    "Power Charm": {"name": "Bùa Sức Mạnh", "price": 8000, "power": 50, "luck": 0, "duration_min": 10, "duration_max": 20, "emoji": "💪"},
-    "Golden Charm": {"name": "Bùa Vàng", "price": 20000, "power": 30, "luck": 30, "duration_min": 5, "duration_max": 15, "emoji": "🌟"},
+    "Lucky Charm": {"name": "Bùa May Mắn", "price": 5000, "power": 0, "luck": 50, "duration_min": 10, "duration_max": 30, "emoji": emojis.CHARM_GREEN},
+    "Power Charm": {"name": "Bùa Sức Mạnh", "price": 8000, "power": 50, "luck": 0, "duration_min": 10, "duration_max": 20, "emoji": emojis.CHARM_RED},
+    "Golden Charm": {"name": "Bùa Vàng", "price": 20000, "power": 30, "luck": 30, "duration_min": 5, "duration_max": 15, "emoji": emojis.CHARM_YELLOW},
 }
 
 class ChangeBaitView(discord.ui.View):
@@ -465,11 +465,8 @@ class FishingView(discord.ui.View):
     @discord.ui.button(label="Chuyển Vùng", style=discord.ButtonStyle.secondary, emoji="🗺️", row=1)
     async def change_biome(self, interaction: discord.Interaction, button: discord.ui.Button):
         if interaction.user.id != self.user_id: return
-        data = await self.cog.db.get_fishing_data(self.user_id)
-        stats = data.get("stats", {})
-        view = BiomeSelectView(self.cog, self.user_id, self.current_biome, stats)
-        embed = view.get_embed()
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        # Call the existing command logic function to ensure consistency (same interface as /khu-vuc)
+        await self.cog.show_biomes_ui(interaction)
 
     @discord.ui.button(label="Đổi Mồi", style=discord.ButtonStyle.secondary, emoji="🪱", row=1)
     async def change_bait(self, interaction: discord.Interaction, button: discord.ui.Button):
@@ -629,8 +626,18 @@ class InventorySelect(discord.ui.Select):
                 for name, info in fish_inv.items():
                     count = info.get("count", 0)
                     val_fish = info.get("total_value", 0)
+                    
+                    # Look up fish emoji from Biomes data by name
+                    emoji_icon = "🐟"
+                    for b_key, b_val in BIOMES.items():
+                         for f in b_val["fish"]:
+                             if f["name"] == name:
+                                 emoji_icon = f["emoji"]
+                                 break
+                         if emoji_icon != "🐟": break
+                    
                     if count > 0:
-                        fish_list.append(f"• **{name}**: x{count} (Tổng: {val_fish:,} Coiz {emojis.ANIMATED_EMOJI_COIZ})")
+                        fish_list.append(f"• {emoji_icon} **{name}**: x{count} (Tổng: {val_fish:,} Coiz {emojis.ANIMATED_EMOJI_COIZ})")
                         total_val += val_fish
                 embed.add_field(name=f"🐟 Cá ({total_val:,} Coiz {emojis.ANIMATED_EMOJI_COIZ})", value="\n".join(fish_list) if fish_list else "Trống", inline=False)
             else:
@@ -652,7 +659,8 @@ class InventorySelect(discord.ui.Select):
                 charm_list = []
                 for i, c in enumerate(charm_inv):
                     minutes = c['duration'] // 60
-                    charm_list.append(f"**{i+1}.** {c.get('name', 'Bùa')} ({minutes}p)")
+                    c_info = CHARMS.get(c['key'], {"emoji": "🧿"})
+                    charm_list.append(f"**{i+1}.** {c_info.get('emoji', '🧿')} {c.get('name', 'Bùa')} ({minutes}p)")
                 embed.description = "\n".join(charm_list)
             else:
                 embed.description = "Không có bùa nào."
@@ -1244,16 +1252,26 @@ class CauCaCog(commands.Cog):
 
     @app_commands.command(name="khu-vuc", description="Xem và di chuyển đến các khu vực câu cá")
     async def biomes_cmd(self, interaction: discord.Interaction):
+        await self.show_biomes_ui(interaction)
+
+    async def show_biomes_ui(self, interaction: discord.Interaction):
         data = await self.db.get_fishing_data(interaction.user.id)
         stats = data.get("stats", {})
         current = stats.get("current_biome", "River")
         unlocked = stats.get("unlocked_biomes", ["River"])
+        # Ensure default unlock
+        if "River" not in unlocked: 
+            unlocked.append("River")
+            stats["unlocked_biomes"] = unlocked
+            await self.db.update_fishing_data(interaction.user.id, stats=stats) # Sync fix if needed
+            
         xp = stats.get("xp", 0)
+        level = stats.get("level", 1)
         
         curr_info = BIOMES.get(current, BIOMES["River"])
         
         embed = discord.Embed(title="🗺️ BẢN ĐỒ CÂU CÁ", color=discord.Color.teal())
-        embed.description = f"Hiện tại đang ở: **{curr_info['emoji']} {curr_info['name']}**\nKinh nghiệm (XP): **{xp:,}**"
+        embed.description = f"Hiện tại đang ở: **{curr_info['emoji']} {curr_info['name']}**\nLevel: **{level}** | XP: **{xp:,}**"
         
         view = discord.ui.View()
         
@@ -1267,18 +1285,22 @@ class CauCaCog(commands.Cog):
                 s["current_biome"] = biome_key
                 await self.db.update_fishing_data(interaction.user.id, stats=s)
                 b_info = BIOMES[biome_key]
-                await interaction.response.send_message(f"✈️ Đã chuyển đến **{b_info['emoji']} {b_info['name']}**!", ephemeral=True)
+                msg = f"✈️ Đã chuyển đến **{b_info['emoji']} {b_info['name']}**!"
+                if interaction.response.is_done():
+                     await interaction.followup.send(msg, ephemeral=True)
+                else:
+                     await interaction.response.send_message(msg, ephemeral=True)
             else:
                 # Try unlock
                 target = BIOMES[biome_key]
                 cost = target["req_money"]
-                req_xp = target["req_xp"]
+                req_level = target["req_level"]
                 
                 u_bal = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
-                curr_xp = s.get("xp", 0)
+                curr_level = s.get("level", 1)
                 
-                if curr_xp < req_xp:
-                    await interaction.response.send_message(f"❌ Bạn chưa đủ {req_xp:,} XP để mở khóa!", ephemeral=True)
+                if curr_level < req_level:
+                    await interaction.response.send_message(f"❌ Bạn chưa đủ Level {req_level} để mở khóa!", ephemeral=True)
                     return
                 if u_bal < cost:
                     await interaction.response.send_message(f"❌ Bạn không đủ {cost:,} Coinz để mở khóa!", ephemeral=True)
@@ -1296,9 +1318,8 @@ class CauCaCog(commands.Cog):
         for key, info in BIOMES.items():
             label = info['name']
             is_unlocked = key in unlocked
-            desc_s = "Đã mở khóa" if is_unlocked else f"Cần {info['req_xp']} XP, {info['req_money']} coiz"
+            desc_s = "Đã mở khóa (Nhấn để đi)" if is_unlocked else f"Yêu cầu: Level {info['req_level']} | {info['req_money']:,} Coiz"
             emoji = info['emoji']
-            # Only show options if unlocked or next available? Show all for discovery.
             select.add_option(label=label, value=key, description=desc_s, emoji=emoji)
         
         async def select_callback(inter):
@@ -1308,7 +1329,10 @@ class CauCaCog(commands.Cog):
         select.callback = select_callback
         view.add_item(select)
         
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        if interaction.response.is_done():
+             await interaction.followup.send(embed=embed, view=view, ephemeral=True)
+        else:
+             await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
     @app_commands.command(name="shop", description="🏪 Mở cửa hàng vật phẩm (Mồi, Cần, Bùa)")
     async def shop(self, interaction: discord.Interaction):
