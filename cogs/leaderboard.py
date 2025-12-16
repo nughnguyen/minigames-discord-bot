@@ -73,8 +73,8 @@ class LeaderboardCog(commands.Cog):
         embed.set_thumbnail(url=target_user.display_avatar.url)
         
         embed.add_field(
-            name="🏆 Tổng Coinz",
-            value=f"**{total_points:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+            name="🏆 Tổng Coiz",
+            value=f"**{total_points:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}",
             inline=True
         )
 
@@ -120,13 +120,13 @@ class LeaderboardCog(commands.Cog):
             inline=False
         )
 
-        embed.set_footer(text="Gõ /daily mỗi ngày để nhận coinz miễn phí!")
+        embed.set_footer(text="Gõ /daily mỗi ngày để nhận coiz miễn phí!")
         
         await interaction.response.send_message(embed=embed)
     
-    @app_commands.command(name="daily", description="📅 Điểm danh hằng ngày nhận Coinz")
+    @app_commands.command(name="daily", description="📅 Điểm danh hằng ngày nhận Coiz")
     async def daily(self, interaction: discord.Interaction):
-        """Nhận coinz hằng ngày. Reset lúc 7h sáng VN."""
+        """Nhận coiz hằng ngày. Reset lúc 7h sáng VN."""
         from datetime import datetime, timedelta, time
         import zoneinfo
         
@@ -237,7 +237,7 @@ class LeaderboardCog(commands.Cog):
         # Response
         embed = discord.Embed(
             title="📅 Điểm danh hàng ngày",
-            description=f"Bạn đã nhận được **{reward:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+            description=f"Bạn đã nhận được **{reward:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}",
             color=config.COLOR_SUCCESS
         )
         if new_streak > 1:

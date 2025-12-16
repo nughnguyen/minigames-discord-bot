@@ -36,8 +36,8 @@ class DonationModal(ui.Modal):
             await interaction.response.send_message("❌ Số tiền không hợp lệ. Vui lòng nhập số.", ephemeral=True)
             return
 
-        if amount_val < config.MIN_DONATION_COINZ:
-            await interaction.response.send_message(f"❌ Số tiền tối thiểu là {config.MIN_DONATION_COINZ} VND.", ephemeral=True)
+        if amount_val < config.MIN_DONATION_COIZ:
+            await interaction.response.send_message(f"❌ Số tiền tối thiểu là {config.MIN_DONATION_COIZ} VND.", ephemeral=True)
             return
 
         # Generate Unique Order Code
@@ -45,7 +45,7 @@ class DonationModal(ui.Modal):
         order_content = f"GUMZ{rand_code}"
         
         # Calculate Rewards and Expiry
-        coinz_reward = (amount_val // 1000) * config.COINZ_PER_1000VND
+        coiz_reward = (amount_val // 1000) * config.COIZ_PER_1000VND
         expiry_seconds = 600 # 10 minutes
         expiry_time = discord.utils.utcnow() + datetime.timedelta(seconds=expiry_seconds)
         expiry_timestamp = int(expiry_time.timestamp())
@@ -88,7 +88,7 @@ class DonationModal(ui.Modal):
             title="💳 Thanh Toán",
             description=(
                 f"Bạn đã chọn nạp **{amount_val:,} VND** qua **{self.method}**.\n"
-                f"Sẽ nhận được: **{coinz_reward:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}\n\n"
+                f"Sẽ nhận được: **{coiz_reward:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ}\n\n"
                 f"**⚠️ LƯU Ý QUAN TRỌNG:**\n"
                 f"1. Nội dung chuyển khoản: `{order_content}`\n"
                 f"2. Thời gian còn lại: <t:{expiry_timestamp}:R> (Hết hạn lúc <t:{expiry_timestamp}:T>)\n"
@@ -131,7 +131,7 @@ async def monitor_transaction(interaction: discord.Interaction, order_code: str,
                     
                     if status == 'success':
                         amount = data.get('amount', 0)
-                        coinz = (amount // 1000) * config.COINZ_PER_1000VND
+                        coiz = (amount // 1000) * config.COIZ_PER_1000VND
                         
                         embed = discord.Embed(
                             title=f"{emojis.TADA_LEFT} THANH TOÁN THÀNH CÔNG {emojis.TADA_RIGHT}",
@@ -139,7 +139,7 @@ async def monitor_transaction(interaction: discord.Interaction, order_code: str,
                                 f"Cảm ơn bạn đã ủng hộ!\n"
                                 f"Đơn hàng: `{order_code}`\n"
                                 f"Đã nạp: **{amount:,} VND**\n"
-                                f"Nhận được: **{coinz:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}"
+                                f"Nhận được: **{coiz:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ}"
                             ),
                             color=config.COLOR_SUCCESS,
                             timestamp=discord.utils.utcnow()

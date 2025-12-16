@@ -132,9 +132,9 @@ BADGES = {
     "Silver":    {"name": "Huy hiệu Bạc",  "desc": "Câu được tổng cộng 500 con cá", "emoji": emojis.BADGE_SILVER, "req_type": "total_fish", "req_val": 500},
     "Gold":      {"name": "Huy hiệu Vàng", "desc": "Câu được tổng cộng 1000 con cá", "emoji": emojis.BADGE_GOLD, "req_type": "total_fish", "req_val": 1000},
     "Platinum":  {"name": "Huy hiệu Bạch Kim", "desc": "Câu được tổng cộng 5000 con cá", "emoji": emojis.BADGE_PLATINUM, "req_type": "total_fish", "req_val": 5000},
-    "Amethyst":  {"name": "Huy hiệu Thạch Anh", "desc": "Kiếm được 1 triệu Coinz từ câu cá", "emoji": emojis.BADGE_AMETHYST, "req_type": "total_earn", "req_val": 1000000},
-    "Emerald":   {"name": "Huy hiệu Lục Bảo", "desc": "Kiếm được 10 triệu Coinz từ câu cá", "emoji": emojis.BADGE_EMERALD, "req_type": "total_earn", "req_val": 10000000},
-    "Ruby":      {"name": "Huy hiệu Hồng Ngọc", "desc": "Kiếm được 100 triệu Coinz từ câu cá", "emoji": emojis.BADGE_RUBY, "req_type": "total_earn", "req_val": 100000000},
+    "Amethyst":  {"name": "Huy hiệu Thạch Anh", "desc": "Kiếm được 1 triệu Coiz từ câu cá", "emoji": emojis.BADGE_AMETHYST, "req_type": "total_earn", "req_val": 1000000},
+    "Emerald":   {"name": "Huy hiệu Lục Bảo", "desc": "Kiếm được 10 triệu Coiz từ câu cá", "emoji": emojis.BADGE_EMERALD, "req_type": "total_earn", "req_val": 10000000},
+    "Ruby":      {"name": "Huy hiệu Hồng Ngọc", "desc": "Kiếm được 100 triệu Coiz từ câu cá", "emoji": emojis.BADGE_RUBY, "req_type": "total_earn", "req_val": 100000000},
     "Sapphire":  {"name": "Huy hiệu Sapphire", "desc": "Sở hữu 10 loại Cần câu khác nhau", "emoji": emojis.BADGE_SAPPHIRE, "req_type": "rod_count", "req_val": 10},
     "50Shades":  {"name": "50 Sắc Thái", "desc": "Sở hữu 20 loại Cần câu khác nhau", "emoji": emojis.BADGE_50_SHADES, "req_type": "rod_count", "req_val": 20},
     "Admin":     {"name": "Admin", "desc": "Dành cho Admin", "emoji": emojis.BADGE_ADMIN, "req_type": "admin", "req_val": 0},
@@ -347,7 +347,7 @@ class BiomeSelectView(discord.ui.View):
              self.add_item(btn)
         else:
              cost = BIOMES[self.selected_biome].get("req_money", 0)
-             btn = discord.ui.Button(label=f"Mở Khóa ({cost:,} Coinz)", style=discord.ButtonStyle.primary, emoji="🔓")
+             btn = discord.ui.Button(label=f"Mở Khóa ({cost:,} Coiz)", style=discord.ButtonStyle.primary, emoji="🔓")
              btn.callback = self.unlock_callback
              self.add_item(btn)
 
@@ -357,7 +357,7 @@ class BiomeSelectView(discord.ui.View):
         
         req_xp = b_data.get("req_xp", 0)
         req_money = b_data.get("req_money", 0)
-        status = "✅ Đã mở khóa" if self.selected_biome in self.unlocked else f"🔒 Yêu cầu: {req_xp} XP | {req_money:,} Coinz"
+        status = "✅ Đã mở khóa" if self.selected_biome in self.unlocked else f"🔒 Yêu cầu: {req_xp} XP | {req_money:,} Coiz"
         embed.add_field(name="📍 Trạng Thái", value=status, inline=False)
         
         fish_list = b_data.get("fish", [])
@@ -385,7 +385,7 @@ class BiomeSelectView(discord.ui.View):
               
          user_point = await self.cog.db.get_player_points(self.user_id, interaction.guild_id)
          if user_point < cost:
-              await interaction.response.send_message(f"❌ Bạn không đủ tiền! Cần {cost:,} Coinz.", ephemeral=True)
+              await interaction.response.send_message(f"❌ Bạn không đủ tiền! Cần {cost:,} Coiz.", ephemeral=True)
               return
               
          await self.cog.db.add_points(self.user_id, interaction.guild_id, -cost)
@@ -453,7 +453,7 @@ class FishingView(discord.ui.View):
             await interaction.response.edit_message(view=self)
             names_summary = ", ".join(set(names_sold))
             cnt = len(names_sold)
-            await interaction.followup.send(f"✅ Đã bán **{cnt}x cá** ({names_summary}) với giá **{total_val:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}", ephemeral=True)
+            await interaction.followup.send(f"✅ Đã bán **{cnt}x cá** ({names_summary}) với giá **{total_val:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}", ephemeral=True)
         else:
              await interaction.response.send_message("❌ Cá này không còn trong túi đồ (có thể đã bán?)", ephemeral=True)
 
@@ -562,7 +562,7 @@ class CauCaCog(commands.Cog):
         for key, info in CHARMS.items():
             embed.add_field(
                 name=f"{info['emoji']} {info['name']}",
-                value=f"💰 Giá: **{info['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}\n💪 Power: +{info['power']} | 🍀 Luck: +{info['luck']}\n⏱️ Thời gian: {info['duration_min']}-{info['duration_max']} phút",
+                value=f"💰 Giá: **{info['price']:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}\n💪 Power: +{info['power']} | 🍀 Luck: +{info['luck']}\n⏱️ Thời gian: {info['duration_min']}-{info['duration_max']} phút",
                 inline=False
             )
             
@@ -686,7 +686,7 @@ class CauCaCog(commands.Cog):
         # 1. New User: First Rod (Steel Rod - 5000 Coinz)
         if not owned_rods:
             if user_balance < 5000:
-                 msg = f"❌ Bạn là người mới? Bạn cần **5,000 Coinz** {emojis.ANIMATED_EMOJI_COINZ} để mua Cần Câu đầu tiên (Cần Thép)!"
+                 msg = f"❌ Bạn là người mới? Bạn cần **5,000 Coiz** {emojis.ANIMATED_EMOJI_COIZ} để mua Cần Câu đầu tiên (Cần Thép)!"
                  try: await interaction.response.send_message(msg, ephemeral=True)
                  except: await interaction.followup.send(msg, ephemeral=True)
                  return
@@ -704,7 +704,7 @@ class CauCaCog(commands.Cog):
             # Also ensure Steel Rod is active
             await self.db.update_fishing_data(user_id, rod_type="Steel Rod", inventory=inventory)
             
-            try: await interaction.channel.send(f"🎉 **Chào mừng Newbie!** Hệ thống đã tự động mua **Cần Thép** (-5,000 Coinz {emojis.ANIMATED_EMOJI_COINZ}) cho bạn!")
+            try: await interaction.channel.send(f"🎉 **Chào mừng Newbie!** Hệ thống đã tự động mua **Cần Thép** (-5,000 Coiz {emojis.ANIMATED_EMOJI_COIZ}) cho bạn!")
             except: pass
             
             # Refresh data
@@ -712,9 +712,9 @@ class CauCaCog(commands.Cog):
             stats = data.get("stats", {})
             inventory = data.get("inventory", {})
 
-        # 2. Fishing Cost (10 Coinz)
+        # 2. Fishing Cost (10 Coiz)
         if user_balance < 10:
-             msg = f"❌ Bạn cần **10 Coinz** {emojis.ANIMATED_EMOJI_COINZ} chi phí cho mỗi lần câu!"
+             msg = f"❌ Bạn cần **10 Coiz** {emojis.ANIMATED_EMOJI_COIZ} chi phí cho mỗi lần câu!"
              try: await interaction.response.send_message(msg, ephemeral=True)
              except: await interaction.followup.send(msg, ephemeral=True)
              return
@@ -818,17 +818,17 @@ class CauCaCog(commands.Cog):
             chest = TREASURES[chest_idx]
             
             # Loot Type: Coinz (35%), Fish (35%), Bait (20%), Charm (10%)
-            loot_type = random.choices(["coinz", "fish", "bait", "charm"], weights=[35, 35, 20, 10], k=1)[0]
+            loot_type = random.choices(["coiz", "fish", "bait", "charm"], weights=[35, 35, 20, 10], k=1)[0]
             reward_msg = ""
             
-            if loot_type == "coinz":
+            if loot_type == "coiz":
                 amount = int(chest["value"] * random.uniform(0.8, 1.5))
                 # Update lifetime money? No, this is direct money.
                 current_lt = stats.get("lifetime_money", 0)
                 stats["lifetime_money"] = current_lt + amount
                 
                 await self.db.add_points(user_id, interaction.guild_id, amount)
-                reward_msg = f"Bạn nhận được **{amount:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ} từ rương!"
+                reward_msg = f"Bạn nhận được **{amount:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ} từ rương!"
                 
             elif loot_type == "fish":
                 selected_fish = random.choice(fish_pool)
@@ -1006,7 +1006,7 @@ class CauCaCog(commands.Cog):
             
             embed = discord.Embed(title=title, color=embed_color)
             embed.description = "\n".join(desc_lines)
-            embed.add_field(name="Tổng kết", value=f"Exp: +{total_xp} | Giá trị: {total_val:,} Coinz {emojis.ANIMATED_EMOJI_COINZ}{rod_broken_msg}")
+            embed.add_field(name="Tổng kết", value=f"Exp: +{total_xp} | Giá trị: {total_val:,} Coinz {emojis.ANIMATED_EMOJI_COIZ}{rod_broken_msg}")
             
             dura_info = ""
             if user_dura is not None:
@@ -1108,7 +1108,7 @@ class CauCaCog(commands.Cog):
         for key, info in BIOMES.items():
             label = info['name']
             is_unlocked = key in unlocked
-            desc_s = "Đã mở khóa" if is_unlocked else f"Cần {info['req_xp']} XP, {info['req_money']} coinz"
+            desc_s = "Đã mở khóa" if is_unlocked else f"Cần {info['req_xp']} XP, {info['req_money']} coiz"
             emoji = info['emoji']
             # Only show options if unlocked or next available? Show all for discovery.
             select.add_option(label=label, value=key, description=desc_s, emoji=emoji)
@@ -1137,7 +1137,7 @@ class CauCaCog(commands.Cog):
             # User mentioned price for 1 bait
             embed.add_field(
                 name=f"{info['emoji']} {info['name']}",
-                value=f"� Giá: **{info['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}/cái\n�💪 Power: +{info['power']} | 🍀 Luck: +{info['luck']}\n*{info['desc']}*",
+                value=f"� Giá: **{info['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}/cái\n�💪 Power: +{info['power']} | 🍀 Luck: +{info['luck']}\n*{info['desc']}*",
                 inline=False
             )
             
@@ -1174,7 +1174,7 @@ class CauCaCog(commands.Cog):
                 user_point = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
                 
                 if user_point < cost:
-                    await interaction.response.send_message(f"❌ Bạn không đủ **{cost:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ} để mua {qty}x {self.bait_info['name']}!", ephemeral=True)
+                    await interaction.response.send_message(f"❌ Bạn không đủ **{cost:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ} để mua {qty}x {self.bait_info['name']}!", ephemeral=True)
                     return
                 
                 # Proceed Transaction
@@ -1193,7 +1193,7 @@ class CauCaCog(commands.Cog):
                 
                 await self.db.update_fishing_data(interaction.user.id, inventory=inv, stats=stats)
                 
-                await interaction.response.send_message(f"✅ Đã mua thành công **{qty}x {self.bait_info['emoji']} {self.bait_info['name']}** với giá **{cost:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}!", ephemeral=True)
+                await interaction.response.send_message(f"✅ Đã mua thành công **{qty}x {self.bait_info['emoji']} {self.bait_info['name']}** với giá **{cost:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}!", ephemeral=True)
 
         async def bait_button_callback(interaction: discord.Interaction):
             # Hacky way to get the button that was clicked
@@ -1242,7 +1242,7 @@ class CauCaCog(commands.Cog):
                 buyable_rods.append((key, info))
                 embed.add_field(
                     name=f"{info['emoji']} {info['name']}",
-                    value=f"💰 Giá: **{info['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}\n💪 Power: {info['power']} | 🍀 Luck: {info['luck']} | 🔧 Độ bền: {info['durability']}",
+                    value=f"💰 Giá: **{info['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}\n💪 Power: {info['power']} | 🍀 Luck: {info['luck']} | 🔧 Độ bền: {info['durability']}",
                     inline=False
                 )
         
@@ -1334,7 +1334,7 @@ class CauCaCog(commands.Cog):
                 # Trigger Confirmation
                 confirm_view = ConfirmBuyView(k, i, self.db, inter)
                 await inter.response.send_message(
-                    f"Bạn có chắc muốn mua **{i['emoji']} {i['name']}** với giá **{i['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ} không?",
+                    f"Bạn có chắc muốn mua **{i['emoji']} {i['name']}** với giá **{i['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ} không?",
                     view=confirm_view,
                     ephemeral=True
                 )
@@ -1394,12 +1394,12 @@ class CauCaCog(commands.Cog):
                 count = info.get("count", 0)
                 val = info.get("total_value", 0)
                 if count > 0:
-                    fish_list.append(f"• **{name}**: x{count} (Tổng: {val:,} Coinz {emojis.ANIMATED_EMOJI_COINZ})")
+                    fish_list.append(f"• **{name}**: x{count} (Tổng: {val:,} Coinz {emojis.ANIMATED_EMOJI_COIZ})")
                     total_val += val
             
             fish_text = "\n".join(fish_list)
             if len(fish_text) > 800: fish_text = fish_text[:800] + "..."
-            embed.add_field(name=f"🐟 Cá ({total_val:,} Coinz {emojis.ANIMATED_EMOJI_COINZ})", value=fish_text, inline=False)
+            embed.add_field(name=f"🐟 Cá ({total_val:,} Coinz {emojis.ANIMATED_EMOJI_COIZ})", value=fish_text, inline=False)
         else:
             embed.add_field(name="🐟 Cá", value="Trống", inline=False)
 
@@ -1532,7 +1532,7 @@ class CauCaCog(commands.Cog):
         
         await self.check_badges(interaction.user.id, interaction.channel)
         
-        await interaction.response.send_message(f"💰 Đã bán sạch cá và nhận được **{total_payout:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}!")
+        await interaction.response.send_message(f"💰 Đã bán sạch cá và nhận được **{total_payout:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}!")
 
 async def setup(bot: commands.Bot):
     db = DatabaseManager(config.DATABASE_PATH)

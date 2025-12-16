@@ -49,25 +49,25 @@ class Donation(commands.Cog):
                     if not user_id or not amount:
                         continue
 
-                    # Calculate coinz
-                    base_coinz = (amount // 1000) * config.COINZ_PER_1000VND
+                    # Calculate coiz
+                    base_coiz = (amount // 1000) * config.COIZ_PER_1000VND
                     
                     # Calculate Bonus
-                    bonus_coinz = 0
+                    bonus_coiz = 0
                     if amount >= 500000:
-                        bonus_coinz = 2000000
+                        bonus_coiz = 2000000
                     elif amount >= 200000:
-                        bonus_coinz = 500000
+                        bonus_coiz = 500000
                     elif amount >= 100000:
-                        bonus_coinz = 200000
+                        bonus_coiz = 200000
                     elif amount >= 50000:
-                        bonus_coinz = 50000
+                        bonus_coiz = 50000
                         
-                    total_coinz = base_coinz + bonus_coinz
+                    total_coiz = base_coiz + bonus_coiz
                     
                     # Add points using shared database
                     if hasattr(self.bot, 'db'):
-                        await self.bot.db.add_points(user_id, 0, total_coinz)
+                        await self.bot.db.add_points(user_id, 0, total_coiz)
                         
                         # Check for Donator Rod reward (>= 10k VND)
                         if amount >= 10000:
@@ -102,11 +102,11 @@ class Donation(commands.Cog):
                             f"Cảm ơn bạn đã ủng hộ!\n"
                             f"Đơn hàng: `{txn_id}`\n"
                             f"Nội dung: `{order_code}`\n"
-                            f"Số nhận: **{total_coinz:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}"
+                            f"Số nhận: **{total_coiz:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ}"
                         )
                         
-                        if bonus_coinz > 0:
-                            desc += f"\n*(Gốc: {base_coinz:,} + Bonus: {bonus_coinz:,})*"
+                        if bonus_coiz > 0:
+                            desc += f"\n*(Gốc: {base_coiz:,} + Bonus: {bonus_coiz:,})*"
                             
                         embed = discord.Embed(
                             title="✅ THANH TOÁN THÀNH CÔNG",
@@ -176,8 +176,8 @@ class Donation(commands.Cog):
     async def before_check_donations(self):
         await self.bot.wait_until_ready()
 
-    @app_commands.command(name="chuyen-coinz", description="Chuyển Coinz cho người khác")
-    @app_commands.describe(member="Người nhận", amount="Số Coinz muốn chuyển")
+    @app_commands.command(name="chuyen-coiz", description="Chuyển Coiz cho người khác")
+    @app_commands.describe(member="Người nhận", amount="Số Coiz muốn chuyển")
     async def transfer(self, interaction: discord.Interaction, member: discord.Member, amount: int):
         if not hasattr(self.bot, 'db'):
             await interaction.response.send_message("❌ Hệ thống cơ sở dữ liệu chưa sẵn sàng.", ephemeral=True)
@@ -204,7 +204,7 @@ class Donation(commands.Cog):
                 description=(
                     f"Người gửi: {interaction.user.mention}\n"
                     f"Người nhận: {member.mention}\n"
-                    f"Số tiền: **{amount:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}"
+                    f"Số tiền: **{amount:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ}"
                 ),
                 color=config.COLOR_SUCCESS,
                 timestamp=discord.utils.utcnow()
@@ -216,7 +216,7 @@ class Donation(commands.Cog):
                 recv_embed = discord.Embed(
                     title="💰 BẠN NHẬN ĐƯỢC TIỀN",
                     description=(
-                        f"Bạn được {interaction.user.mention} chuyển **{amount:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}"
+                        f"Bạn được {interaction.user.mention} chuyển **{amount:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ}"
                     ),
                     color=config.COLOR_GOLD,
                     timestamp=discord.utils.utcnow()
@@ -227,19 +227,19 @@ class Donation(commands.Cog):
         else:
             await interaction.response.send_message("❌ Số dư không đủ hoặc giao dịch thất bại.", ephemeral=True)
 
-    @app_commands.command(name="donate", description="Ủng hộ bot hoặc nạp Coinz")
+    @app_commands.command(name="donate", description="Ủng hộ bot hoặc nạp Coiz")
     async def donate(self, interaction: discord.Interaction):
         embed = discord.Embed(
-            title=f"💎 NẠP COINZ | ỦNG HỘ SERVER",
+            title=f"💎 NẠP COIZ | ỦNG HỘ SERVER",
             description=(
-                f"Chào mừng bạn đến với hệ thống nạp Coinz tự động 24/7!\n\n"
-                f"**🎁 QUYỀN LỢI KHI NẠP COINZ**\n"
+                f"Chào mừng bạn đến với hệ thống nạp Coiz tự động 24/7!\n\n"
+                f"**🎁 QUYỀN LỢI KHI NẠP COIZ**\n"
                 "✨ Tham gia các minigame giải trí\n"
                 "✨ Đua Top Tỷ Phú Server\n"
                 "✨ Mua các vật phẩm/quyền lợi (sắp ra mắt)\n"
                 "❤️ Góp phần duy trì Bot hoạt động ổn định\n\n"
                 "**💰 TỶ GIÁ QUY ĐỔI:**\n"
-                f"💵 `1,000 VND` = `{config.COINZ_PER_1000VND:,} Coinz` {emojis.ANIMATED_EMOJI_COINZ}\n"
+                f"💵 `1,000 VND` = `{config.COIZ_PER_1000VND:,} Coiz` {emojis.ANIMATED_EMOJI_COIZ}\n"
                 f"🔥 **Khuyến mãi:** Tặng thêm 10% khi nạp trên 50k!\n"
                 f"🎣 **Đặc biệt:** Nạp tối thiểu **10,000 VND** nhận ngay **Cần Nhà Tài Trợ** (Donator Rod)!\n\n"
                 "**💳 PHƯƠNG THỨC THANH TOÁN:**\n"

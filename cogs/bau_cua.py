@@ -157,8 +157,8 @@ class BauCuaView(discord.ui.View):
         remaining = points - new_locked
         
         await interaction.response.send_message(
-            f"✅ Đã cược **{amount:,}** coinz {emojis.ANIMATED_EMOJI_COINZ} vào {side_emoji} {side_name}!\n"
-            f"Số dư khả dụng: **{remaining:,}** coinz {emojis.ANIMATED_EMOJI_COINZ}", 
+            f"✅ Đã cược **{amount:,}** coiz {emojis.ANIMATED_EMOJI_COIZ} vào {side_emoji} {side_name}!\n"
+            f"Số dư khả dụng: **{remaining:,}** coiz {emojis.ANIMATED_EMOJI_COIZ}", 
             ephemeral=True
         )
         # Note: We do NOT call update_embed here anymore to avoid rate-limit clashes with the animation loop.
@@ -181,7 +181,7 @@ class BauCuaView(discord.ui.View):
             # Update TOTAL BETS field (Index 0)
             total_pot = sum(self.user_total_bet.values())
             total_players = len(self.bets)
-            embed.set_field_at(0, name="💰 Tổng Cược", value=f"**{total_pot:,}** coinz {emojis.ANIMATED_EMOJI_COINZ} ({total_players} người chơi)", inline=False)
+            embed.set_field_at(0, name="💰 Tổng Cược", value=f"**{total_pot:,}** coiz {emojis.ANIMATED_EMOJI_COIZ} ({total_players} người chơi)", inline=False)
             
             # Update BET LIST field (Index 1)
             bet_details = []
@@ -294,7 +294,7 @@ class BauCuaCog(commands.Cog):
         )
         
         # Pre-add "Total Bet" field at index 0
-        embed.add_field(name="💰 Tổng Cược", value="**0** coinz {emojis.ANIMATED_EMOJI_COINZ} (0 người chơi)", inline=False)
+        embed.add_field(name="💰 Tổng Cược", value="**0** coiz {emojis.ANIMATED_EMOJI_COIZ} (0 người chơi)", inline=False)
         
         # Set static image
         embed.set_image(url="https://media.discordapp.net/attachments/1449574237734965311/1449574316361519175/bau-cua.jpg?ex=693f64c8&is=693e1348&hm=55e841a05991f0f8d26114203ffb8b28def31e942729034aaa7cd0245f46ef58&=&format=webp&width=1240&height=829")
@@ -423,16 +423,16 @@ class BauCuaCog(commands.Cog):
             if net_outcome > 0:
                 # Winner
                 detail_str = ", ".join(win_details)
-                line = f"🎉 {user_mention}: **+{net_outcome:,}** {emojis.ANIMATED_EMOJI_COINZ}\n   ╚ {detail_str}"
+                line = f"🎉 {user_mention}: **+{net_outcome:,}** {emojis.ANIMATED_EMOJI_COIZ}\n   ╚ {detail_str}"
                 summary_lines.append(line)
             elif net_outcome == 0:
                 # Break even
-                line = f"😐 {user_mention}: **Hòa vốn** {emojis.ANIMATED_EMOJI_COINZ}"
+                line = f"😐 {user_mention}: **Hòa vốn** {emojis.ANIMATED_EMOJI_COIZ}"
                 summary_lines.append(line)
             else:
                 # Loser
                 # Show negative amount
-                line = f"💸 {user_mention}: **{net_outcome:,}** {emojis.ANIMATED_EMOJI_COINZ}"
+                line = f"💸 {user_mention}: **{net_outcome:,}** {emojis.ANIMATED_EMOJI_COIZ}"
                 summary_lines.append(line)
 
         # Final Result Embed

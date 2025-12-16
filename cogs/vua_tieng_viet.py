@@ -129,11 +129,11 @@ class VuaTiengVietCog(commands.Cog):
         embed.add_field(name="Gợi ý số chữ", value=f"**{hint_text}**", inline=False)
         # Calculate potential points for display
         if len(question) > 25:
-             reward_text = f"🔥 **SIÊU KHÓ** (>25 ký tự): **{config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,}** {emojis.ANIMATED_EMOJI_COINZ}"
+             reward_text = f"🔥 **SIÊU KHÓ** (>25 ký tự): **{config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,}** {emojis.ANIMATED_EMOJI_COIZ}"
         elif len(question) > 15:
-             reward_text = f"🔥 **KHÓ** (>15 ký tự): **{config.POINTS_VUA_TIENG_VIET_KHO:,}** {emojis.ANIMATED_EMOJI_COINZ}"
+             reward_text = f"🔥 **KHÓ** (>15 ký tự): **{config.POINTS_VUA_TIENG_VIET_KHO:,}** {emojis.ANIMATED_EMOJI_COIZ}"
         else:
-             reward_text = f"**{config.POINTS_VUA_TIENG_VIET:,}** {emojis.ANIMATED_EMOJI_COINZ}"
+             reward_text = f"**{config.POINTS_VUA_TIENG_VIET:,}** {emojis.ANIMATED_EMOJI_COIZ}"
         
         embed.add_field(name="🎁 Phần Thưởng", value=reward_text, inline=False)
         embed.set_footer(text="Gõ câu trả lời chính xác vào kênh chat!")
@@ -219,12 +219,12 @@ class VuaTiengVietCog(commands.Cog):
             
             embed = discord.Embed(title=f"{emojis.EMOJI_GIVEAWAY} CHÚC MỪNG CHIẾN THẮNG!", color=0x00FF00)
             embed.description = f"👑 {message.author.mention} đã trả lời chính xác!\n\nĐáp án: **{correct_answer}**"
-            embed.add_field(name="Phần thưởng", value=f"{points:,} coinz {emojis.ANIMATED_EMOJI_COINZ}\n(Trừ gợi ý: -{current_base_points - points:,} coinz {emojis.ANIMATED_EMOJI_COINZ})", inline=False)
+            embed.add_field(name="Phần thưởng", value=f"{points:,} coiz {emojis.ANIMATED_EMOJI_COIZ}\n(Trừ gợi ý: -{current_base_points - points:,} coiz {emojis.ANIMATED_EMOJI_COIZ})", inline=False)
             
             if len(correct_answer) > 25:
-               embed.set_footer(text=f"🔥 > 25 KÝ TỰ: SIÊU TO KHỔNG LỒ ({config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,} coinz!)")
+               embed.set_footer(text=f"🔥 > 25 KÝ TỰ: SIÊU TO KHỔNG LỒ ({config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,} coiz!)")
             elif len(correct_answer) > 15:
-               embed.set_footer(text=f"🔥 > 15 KÝ TỰ: THƯỞNG LỚN ({config.POINTS_VUA_TIENG_VIET_KHO:,} coinz!)")
+               embed.set_footer(text=f"🔥 > 15 KÝ TỰ: THƯỞNG LỚN ({config.POINTS_VUA_TIENG_VIET_KHO:,} coiz!)")
             else:
                embed.set_footer(text=f"Chuẩn bị câu tiếp theo trong 5 giây...")
             

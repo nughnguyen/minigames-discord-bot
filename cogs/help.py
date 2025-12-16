@@ -38,7 +38,7 @@ class HelpView(discord.ui.View):
         max_values=1,
         options=[
             discord.SelectOption(label="Trang Chủ", description="Quay lại menu chính", emoji="🏠"),
-            discord.SelectOption(label="Hướng Dẫn Tân Thủ", description="Cách chơi & Kiếm Coinz", emoji="📘"),
+            discord.SelectOption(label="Hướng Dẫn Tân Thủ", description="Cách chơi & Kiếm Coiz", emoji="📘"),
             discord.SelectOption(label="Câu Cá (Fishing)", description="Hệ thống câu cá RPG", emoji="🎣"),
             discord.SelectOption(label="Games Commands", description="Word Chain, Vua Tiếng Việt, Bầu Cua", emoji="🎮"),
             discord.SelectOption(label="Leaderboard Commands", description="Xem rank", emoji="🏆"),
@@ -119,25 +119,25 @@ class HelpView(discord.ui.View):
             )
             
             embed.add_field(
-                name=f"💰 **Bí Kíp Kiếm Coinz {emojis.ANIMATED_EMOJI_COINZ}**",
+                name=f"💰 **Bí Kíp Kiếm Coiz {emojis.ANIMATED_EMOJI_COIZ}**",
                 value=(
-                    "Coinz là đơn vị tiền tệ chính để chơi game và đua top.\n\n"
+                    "Coiz là đơn vị tiền tệ chính để chơi game và đua top.\n\n"
                     f"**1. Chơi Nối Từ (Word Chain):**\n"
-                    f"   • Trả lời đúng: **+10 coinz** {emojis.ANIMATED_EMOJI_COINZ}\n"
-                    f"   • Bonus Tốc độ: **+20 ~ 100 coinz** {emojis.ANIMATED_EMOJI_COINZ} (Trả lời càng nhanh càng nhiều tiền)\n"
+                    f"   • Trả lời đúng: **+10 coiz** {emojis.ANIMATED_EMOJI_COIZ}\n"
+                    f"   • Bonus Tốc độ: **+20 ~ 100 coiz** {emojis.ANIMATED_EMOJI_COIZ} (Trả lời càng nhanh càng nhiều tiền)\n"
                     f"   • Bonus Từ dài/khó: Nhận thêm thưởng!\n\n"
                     f"**2. Vua Tiếng Việt:**\n"
-                    f"   • Giải mã từ khóa thành công: **Hàng nghìn coinz** {emojis.ANIMATED_EMOJI_COINZ} (Tùy độ khó)\n\n"
+                    f"   • Giải mã từ khóa thành công: **Hàng nghìn coiz** {emojis.ANIMATED_EMOJI_COIZ} (Tùy độ khó)\n\n"
                     f"**3. Bầu Cua Tôm Cá:**\n"
                     f"   • Thử vận may đặt cược để nhân đôi, nhân ba tài sản!\n\n"
                     f"**4. Donation:**\n"
-                    f"   • Nạp coinz {emojis.ANIMATED_EMOJI_COINZ} qua `/donation` để nhận ưu đãi cực khủng."
+                    f"   • Nạp coiz {emojis.ANIMATED_EMOJI_COIZ} qua `/donation` để nhận ưu đãi cực khủng."
                 ),
                 inline=False
             )
             embed.add_field(
                 name="⚠️ **Lưu Ý**",
-                value="• Spam, cheat sẽ bị reset coinz hoặc ban khỏi hệ thống.",
+                value="• Spam, cheat sẽ bị reset coiz hoặc ban khỏi hệ thống.",
                 inline=False
             )
             embed.set_image(url="https://cdn.discordapp.com/attachments/1305556786304127097/1327687391267389632/thenoicez.gif?ex=6940eafd&is=693f997d&hm=332f39b7a027ecfebdead2cd326f57c1502020fff8922b78c8fdb623fa49a43b&")
@@ -162,7 +162,7 @@ class HelpView(discord.ui.View):
                     "• **Rods (Cần Câu)**: Cần xịn tăng **Power** (Câu cá to) và **Luck** (Câu cá hiếm).\n"
                     "• **Baits (Mồi)**: Tăng chỉ số. Đặc biệt **Nam Châm** hút nhiều cá cùng lúc!\n"
                     "• **Charms (Bùa Chú)**: Buff Power/Luck/Exp trong thời gian ngắn (Cộng dồn).\n"
-                    "• **Treasure (Kho Báu)**: 2% cơ hội (tăng theo Luck) câu được rương chứa Coinz, Mồi, Cá, hoặc Bùa."
+                    "• **Treasure (Kho Báu)**: 2% cơ hội (tăng theo Luck) câu được rương chứa Coiz, Mồi, Cá, hoặc Bùa."
                 ),
                 inline=False
             )
@@ -192,13 +192,13 @@ class HelpView(discord.ui.View):
                     f"  `/stop` - Dừng game (Kết thúc & trao giải)\n"
                     f"  `/challenge-bot` - ⚔️ Thách đấu Bot (Solo)\n"
                     f"• **Hỗ trợ**:\n"
-                    f"  `/hint` - Gợi ý nhận ký tự tiếp theo ({config.HINT_COST} Coinz {emojis.ANIMATED_EMOJI_COINZ})\n"
-                    f"  `/pass` - Bỏ lượt an toàn ({config.PASS_COST} Coinz {emojis.ANIMATED_EMOJI_COINZ})\n"
+                    f"  `/hint` - Gợi ý nhận ký tự tiếp theo ({config.HINT_COST} Coiz {emojis.ANIMATED_EMOJI_COIZ})\n"
+                    f"  `/pass` - Bỏ lượt an toàn ({config.PASS_COST} Coiz {emojis.ANIMATED_EMOJI_COIZ})\n"
                     f"• **Điểm Thưởng & Phạt**:\n"
-                    f"  ✅ **Đúng**: +10 Coinz {emojis.ANIMATED_EMOJI_COINZ} (+Bonus Level/Từ dài)\n"
+                    f"  ✅ **Đúng**: +10 Coiz {emojis.ANIMATED_EMOJI_COIZ} (+Bonus Level/Từ dài)\n"
                     f"  ⚡ **Tốc độ**: <5s (+100), <10s (+50), <20s (+20)\n"
-                    f"  ❌ **Sai**: -2 Coinz {emojis.ANIMATED_EMOJI_COINZ}/lần (Tối đa 5 lần/lượt)\n"
-                    f"  🐌 **Timeout**: -10 Coinz {emojis.ANIMATED_EMOJI_COINZ} (Mất lượt)"
+                    f"  ❌ **Sai**: -2 Coiz {emojis.ANIMATED_EMOJI_COIZ}/lần (Tối đa 5 lần/lượt)\n"
+                    f"  🐌 **Timeout**: -10 Coiz {emojis.ANIMATED_EMOJI_COIZ} (Mất lượt)"
                 ),
                 inline=False
             )
@@ -212,7 +212,7 @@ class HelpView(discord.ui.View):
                     f"  `/start` - Bắt đầu game tại kênh VTV\n"
                     f"  `/stop` - Dừng game\n"
                     f"• **Cách chơi**: Gõ đáp án trực tiếp vào chat.\n"
-                    f"• **Phần thưởng**: Từ {config.POINTS_VUA_TIENG_VIET:,} đến {config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,} Coinz (Tùy độ khó)!"
+                    f"• **Phần thưởng**: Từ {config.POINTS_VUA_TIENG_VIET:,} đến {config.POINTS_VUA_TIENG_VIET_SIEU_KHO:,} Coiz (Tùy độ khó)!"
                 ),
                 inline=False
             )
@@ -237,7 +237,7 @@ class HelpView(discord.ui.View):
                 name="📊 **Thống Kê**",
                 value=(
                     "`/leaderboard` - Xem Top Server\n"
-                    "`/stats [user]` - Xem thông tin cá nhân (Rank, Coinz, WinRate...)"
+                    "`/stats [user]` - Xem thông tin cá nhân (Rank, Coiz, WinRate...)"
                 ),
                 inline=False
             )
@@ -257,12 +257,12 @@ class HelpView(discord.ui.View):
                 inline=False
             )
             embed.add_field(
-                name="💰 **Quản Lý Coinz/Stats**",
+                name="💰 **Quản Lý Coiz/Stats**",
                 value=(
-                    f"`/add-coinz [user] [amount]` - Cộng coinz {emojis.ANIMATED_EMOJI_COINZ} (Chỉ dành cho Owner)\n"
-                    f"`/subtract-coinz [user] [amount]` - Trừ coinz {emojis.ANIMATED_EMOJI_COINZ} (Chỉ dành cho Owner)\n"
-                    f"`/chuyen-coinz [user] [amount]` - Chuyển coinz {emojis.ANIMATED_EMOJI_COINZ}\n"
-                    f"`/reset-coinz [user]` - Set coinz {emojis.ANIMATED_EMOJI_COINZ} về 0 (Chỉ dành cho Owner)\n"
+                    f"`/add-coiz [user] [amount]` - Cộng coiz {emojis.ANIMATED_EMOJI_COIZ} (Chỉ dành cho Owner)\n"
+                    f"`/subtract-coiz [user] [amount]` - Trừ coiz {emojis.ANIMATED_EMOJI_COIZ} (Chỉ dành cho Owner)\n"
+                    f"`/chuyen-coiz [user] [amount]` - Chuyển coiz {emojis.ANIMATED_EMOJI_COIZ}\n"
+                    f"`/reset-coiz [user]` - Set coiz {emojis.ANIMATED_EMOJI_COIZ} về 0 (Chỉ dành cho Owner)\n"
                     f"`/reset-stats [user]` - Reset toàn bộ chỉ số game (Chỉ dành cho Owner)"
                 ),
                 inline=False
@@ -283,16 +283,16 @@ class HelpView(discord.ui.View):
             embed.set_image(url="https://cdn.discordapp.com/attachments/1305556786304127097/1327687391267389632/thenoicez.gif?ex=6940eafd&is=693f997d&hm=332f39b7a027ecfebdead2cd326f57c1502020fff8922b78c8fdb623fa49a43b&")
 
         elif choice == "Donation":
-            embed.title = "💎 NẠP COINZ | ỦNG HỘ SERVER"
+            embed.title = "💎 NẠP COIZ | ỦNG HỘ SERVER"
             embed.description = (
-                "Chào mừng bạn đến với hệ thống nạp Coinz tự động 24/7!\n\n"
-                "**🎁 QUYỀN LỢI KHI NẠP COINZ:**\n"
+                "Chào mừng bạn đến với hệ thống nạp Coiz tự động 24/7!\n\n"
+                "**🎁 QUYỀN LỢI KHI NẠP COIZ:**\n"
                 "✨ Tham gia các minigame giải trí\n"
                 "✨ Đua Top Tỷ Phú Server\n"
                 "✨ Mua các vật phẩm/quyền lợi (sắp ra mắt)\n"
                 "❤️ Góp phần duy trì Bot hoạt động ổn định\n\n"
                 "**💰 TỶ GIÁ QUY ĐỔI:**\n"
-                f"💵 `1,000 VND` = `{config.COINZ_PER_1000VND:,} Coinz` {emojis.ANIMATED_EMOJI_COINZ}\n"
+                f"💵 `1,000 VND` = `{config.COIZ_PER_1000VND:,} Coiz` {emojis.ANIMATED_EMOJI_COIZ}\n"
                 f"🔥 **Khuyến mãi:** Tặng thêm 10% khi nạp trên 50k!\n"
                 f"🎣 **Đặc biệt:** Nạp tối thiểu **10,000 VND** nhận ngay **Cần Nhà Tài Trợ** (Donator Rod)!\n\n"
                 "**💳 PHƯƠNG THỨC THANH TOÁN:**\n"

@@ -82,8 +82,8 @@ def create_correct_answer_embed(player_mention: str, word: str, points: int, rea
     )
     
     embed.add_field(
-        name=f"{emojis.STAR} Coinz Nhận Được",
-        value=f"+{points:,} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+        name=f"{emojis.STAR} Coiz Nhận Được",
+        value=f"+{points:,} Coiz {emojis.ANIMATED_EMOJI_COIZ}",
         inline=True
     )
     
@@ -166,7 +166,7 @@ def create_rich_correct_answer_embed(
         if bonuses:
             embed.add_field(
                 name="Tổng cộng",
-                value=f"**+{points:,}** {emojis.ANIMATED_EMOJI_COINZ}",
+                value=f"**+{points:,}** {emojis.ANIMATED_EMOJI_COIZ}",
                 inline=False
             )
     
@@ -190,8 +190,8 @@ def create_wrong_answer_embed(player_mention: str, word: str, reason: str) -> di
     )
     
     embed.add_field(
-        name="Coinz Bị Trừ",
-        value=f"{config.POINTS_WRONG:,} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+        name="Coiz Bị Trừ",
+        value=f"{config.POINTS_WRONG:,} Coiz {emojis.ANIMATED_EMOJI_COIZ}",
         inline=True
     )
     
@@ -207,8 +207,8 @@ def create_timeout_embed(player_mention: str) -> discord.Embed:
     )
     
     embed.add_field(
-        name="Coinz Bị Trừ",
-        value=f"{config.POINTS_WRONG:,} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+        name="Coiz Bị Trừ",
+        value=f"{config.POINTS_WRONG:,} Coiz {emojis.ANIMATED_EMOJI_COIZ}",
         inline=True
     )
     
@@ -225,7 +225,7 @@ def create_game_end_embed(winner_data: Dict, total_turns: int, used_words_count:
     
     if winner_data:
         # winner_data contains: 'user_id', 'session_points', 'total_points'
-        session_text = f"**{winner_data['session_points']:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}"
+        session_text = f"**{winner_data['session_points']:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ}"
         
         embed.add_field(
             name=f"{emojis.CROWN} Người Chiến Thắng",
@@ -257,7 +257,7 @@ def create_leaderboard_embed(leaderboard_data: List[Dict], server_name: str) -> 
     leaderboard_text = ""
     for idx, player in enumerate(leaderboard_data, 1):
         rank_emoji = emojis.get_rank_emoji(idx)
-        leaderboard_text += f"{rank_emoji} **#{idx}** <@{player['user_id']}> - **{player['total_points']:,}** Coinz {emojis.ANIMATED_EMOJI_COINZ}\n"
+        leaderboard_text += f"{rank_emoji} **#{idx}** <@{player['user_id']}> - **{player['total_points']:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}\n"
     
     embed.add_field(
         name="Danh Sách Tỷ Phú",
@@ -280,7 +280,7 @@ def create_hint_embed(hint: str, cost: int) -> discord.Embed:
     
     embed.add_field(
         name="Chi Phí",
-        value=f"-{cost:,} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+        value=f"-{cost:,} Coiz {emojis.ANIMATED_EMOJI_COIZ}",
         inline=True
     )
     

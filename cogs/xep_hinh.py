@@ -386,15 +386,15 @@ class XepHinhCog(commands.Cog):
                 final_score = gd['score']
                 player_id = gd['player_id']
                 
-                # Conversion rate: 1 Point = 100 Coinz
-                final_coinz = final_score * 100
+                # Conversion rate: 1 Point = 100 Coiz
+                final_coiz = final_score * 100
                 
-                if final_coinz > 0:
-                    await self.db.add_points(player_id, gd['message'].guild.id, final_coinz)
+                if final_coiz > 0:
+                    await self.db.add_points(player_id, gd['message'].guild.id, final_coiz)
                 
                 embed = discord.Embed(
                     title="GAME OVER",
-                    description=f"Kết thúc game!\nNgười chơi: <@{player_id}>\n**Điểm số: {final_score}**\n**Nhận được: {final_coinz:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}\nSố hàng: {gd['lines']}",
+                    description=f"Kết thúc game!\nNgười chơi: <@{player_id}>\n**Điểm số: {final_score}**\n**Nhận được: {final_coiz:,} Coiz** {emojis.ANIMATED_EMOJI_COIZ}\nSố hàng: {gd['lines']}",
                     color=discord.Color.red()
                 )
                 try:

@@ -284,7 +284,7 @@ class GameCog(commands.Cog):
         embed = embeds.create_status_embed(status_data)
         await interaction.response.send_message(embed=embed)
     
-    @app_commands.command(name="hint", description="💡 Nhận gợi ý (tốn 100 coinz)")
+    @app_commands.command(name="hint", description="💡 Nhận gợi ý (tốn 100 coiz)")
     async def hint(self, interaction: discord.Interaction):
         """Gợi ý chữ cái tiếp theo"""
         game_state = await self.db.get_game_state(interaction.channel_id)
@@ -300,7 +300,7 @@ class GameCog(commands.Cog):
         points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
         if points < config.HINT_COST:
             await interaction.response.send_message(
-                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ Coinz! Cần {config.HINT_COST} Coinz, bạn chỉ có {points} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ Coiz! Cần {config.HINT_COST} Coiz, bạn chỉ có {points} Coiz {emojis.ANIMATED_EMOJI_COIZ}",
                 ephemeral=True
             )
             return
@@ -317,9 +317,9 @@ class GameCog(commands.Cog):
         embed = embeds.create_hint_embed(hint_char, config.HINT_COST)
         await interaction.response.send_message(embed=embed, ephemeral=True)
     
-    @app_commands.command(name="pass", description="⏭️ Bỏ lượt (tốn 20 Coinz)")
+    @app_commands.command(name="pass", description="⏭️ Bỏ lượt (tốn 20 Coiz)")
     async def pass_turn(self, interaction: discord.Interaction):
-        """Bỏ lượt không bị trừ coinz timeout"""
+        """Bỏ lượt không bị trừ coiz timeout"""
         game_state = await self.db.get_game_state(interaction.channel_id)
         
         if not game_state:
@@ -341,7 +341,7 @@ class GameCog(commands.Cog):
         points = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
         if points < config.PASS_COST:
             await interaction.response.send_message(
-                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ Coinz! Cần {config.PASS_COST} Coinz, bạn chỉ có {points} Coinz {emojis.ANIMATED_EMOJI_COINZ}",
+                f"{emojis.ANIMATED_EMOJI_WRONG} Bạn không đủ Coiz! Cần {config.PASS_COST} Coiz, bạn chỉ có {points} Coiz {emojis.ANIMATED_EMOJI_COIZ}",
                 ephemeral=True
             )
             return
@@ -367,7 +367,7 @@ class GameCog(commands.Cog):
         
         # Thông báo
         await interaction.response.send_message(
-            f"{emojis.PASS} {interaction.user.mention} đã bỏ lượt! (-{config.PASS_COST} Coinz {emojis.ANIMATED_EMOJI_COINZ})\n"
+            f"{emojis.PASS} {interaction.user.mention} đã bỏ lượt! (-{config.PASS_COST} Coiz {emojis.ANIMATED_EMOJI_COIZ})\n"
             f"Lượt tiếp theo: {next_player.mention}"
         )
         
@@ -430,15 +430,15 @@ class GameCog(commands.Cog):
             if elapsed < 5:
                 # Siêu tốc (<5s) - 100% Base (100 points)
                 points += 100 
-                bonus_list.append(f"⚡ Siêu tốc! (+100 {emojis.ANIMATED_EMOJI_COINZ})")
+                bonus_list.append(f"⚡ Siêu tốc! (+100 {emojis.ANIMATED_EMOJI_COIZ})")
             elif elapsed < 10:
                 # Nhanh (<10s) - 50% Base (50 points)
                 points += 50
-                bonus_list.append(f"🏃 Nhanh! (+50 {emojis.ANIMATED_EMOJI_COINZ})")
+                bonus_list.append(f"🏃 Nhanh! (+50 {emojis.ANIMATED_EMOJI_COIZ})")
             elif elapsed < 20:
                 # Khá (<20s) - 20% Base (20 points)
                 points += 20
-                bonus_list.append(f"🙂 Khá! (+20 {emojis.ANIMATED_EMOJI_COINZ})")
+                bonus_list.append(f"🙂 Khá! (+20 {emojis.ANIMATED_EMOJI_COIZ})")
         
         # Word Length/Advanced Bonus
         word_info = None
@@ -462,16 +462,16 @@ class GameCog(commands.Cog):
                 
                 if level_points > 0:
                     points += level_points
-                    bonus_list.append(f"📚 Level {level.upper()}! (+{level_points} {emojis.ANIMATED_EMOJI_COINZ})")
+                    bonus_list.append(f"📚 Level {level.upper()}! (+{level_points} {emojis.ANIMATED_EMOJI_COIZ})")
             
             # Fallback to long word bonus if no level bonus was awarded
             if level_points == 0 and len(word) >= config.LONG_WORD_THRESHOLD:
                 points += config.POINTS_LONG_WORD # 200 points
-                bonus_list.append(f"📝 Từ dài! (+{config.POINTS_LONG_WORD} {emojis.ANIMATED_EMOJI_COINZ})")
+                bonus_list.append(f"📝 Từ dài! (+{config.POINTS_LONG_WORD} {emojis.ANIMATED_EMOJI_COIZ})")
                 
         elif validator.is_long_word(word):
             points += config.POINTS_LONG_WORD # 20 points
-            bonus_list.append(f"{emojis.FIRE} Từ dài! (+{config.POINTS_LONG_WORD} {emojis.ANIMATED_EMOJI_COINZ})")
+            bonus_list.append(f"{emojis.FIRE} Từ dài! (+{config.POINTS_LONG_WORD} {emojis.ANIMATED_EMOJI_COIZ})")
             
         bonus_reason = "\n".join(bonus_list)
         
@@ -627,7 +627,7 @@ class GameCog(commands.Cog):
             if game_state['current_player_id'] != player_id:
                 return  # Đã chuyển lượt rồi
             
-            # Trừ coinz timeout (-10)
+            # Trừ coiz timeout (-10)
             channel = self.bot.get_channel(channel_id)
             player = self.bot.get_user(player_id)
             
@@ -637,7 +637,7 @@ class GameCog(commands.Cog):
             # Gửi thông báo timeout
             embed = embeds.create_timeout_embed(player.mention)
             # Override description to show correct penalty
-            embed.description = f"{player.mention} {emojis.SNAIL} đã không trả lời kịp thời! (-{abs(config.POINTS_TIMEOUT)} Coinz {emojis.ANIMATED_EMOJI_COINZ})"
+            embed.description = f"{player.mention} {emojis.SNAIL} đã không trả lời kịp thời! (-{abs(config.POINTS_TIMEOUT)} Coiz {emojis.ANIMATED_EMOJI_COIZ})"
             await channel.send(embed=embed)
             
             # Chuyển lượt
@@ -663,8 +663,8 @@ class GameCog(commands.Cog):
         """Xử lý trả lời sai"""
         current_wrong = game_state.get('wrong_attempts', 0) + 1
         
-        # Tính coinz trừ tích lũy: 2, 4, 6... (Mỗi lần sai -2)
-        # Hoặc đơn giản là mỗi lần sai trừ 2 coinz, user yêu cầu "trừ tối đa 10 coinz" cho 5 lần
+        # Tính coiz trừ tích lũy: 2, 4, 6... (Mỗi lần sai -2)
+        # Hoặc đơn giản là mỗi lần sai trừ 2 coiz, user yêu cầu "trừ tối đa 10 coiz" cho 5 lần
         # -> Nghĩa là lần 1 trừ 2, lần 2 trừ 2... tổng 5 lần là 10.
         penalty = config.POINTS_WRONG # -2
         
@@ -705,7 +705,7 @@ class GameCog(commands.Cog):
             embed = embeds.create_wrong_answer_embed(
                 message.author.mention,
                 word,
-                f"{reason}\n⚠️ Bạn còn **{remaining}** lần thử. (Bị trừ {abs(penalty)} Coinz {emojis.ANIMATED_EMOJI_COINZ})"
+                f"{reason}\n⚠️ Bạn còn **{remaining}** lần thử. (Bị trừ {abs(penalty)} Coiz {emojis.ANIMATED_EMOJI_COIZ})"
             )
             await message.channel.send(embed=embed)
 

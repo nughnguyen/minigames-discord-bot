@@ -87,9 +87,9 @@ DATA_VUA_TIENG_VIET_PATH = 'data/vua_tieng_viet.json'
 
 # Donation Settings
 DONATION_WEB_URL = os.getenv('DONATION_WEB_URL', 'https://gumzpay.vercel.app')
-MIN_DONATION_COINZ = 1000
+MIN_DONATION_COIZ = 1000
 MIN_DONATION_SUPPORT = 10000
-COINZ_PER_1000VND = 10000
+COIZ_PER_1000VND = 10000
 
 # Banking Info (Placeholder - User should update .env)
 BANK_ID = os.getenv('BANK_ID', 'OCB') 
