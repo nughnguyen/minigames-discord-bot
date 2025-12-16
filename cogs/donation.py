@@ -50,11 +50,24 @@ class Donation(commands.Cog):
                         continue
 
                     # Calculate coinz
-                    coinz = (amount // 1000) * config.COINZ_PER_1000VND
+                    base_coinz = (amount // 1000) * config.COINZ_PER_1000VND
+                    
+                    # Calculate Bonus
+                    bonus_coinz = 0
+                    if amount >= 500000:
+                        bonus_coinz = 2000000
+                    elif amount >= 200000:
+                        bonus_coinz = 500000
+                    elif amount >= 100000:
+                        bonus_coinz = 200000
+                    elif amount >= 50000:
+                        bonus_coinz = 50000
+                        
+                    total_coinz = base_coinz + bonus_coinz
                     
                     # Add points using shared database
                     if hasattr(self.bot, 'db'):
-                        await self.bot.db.add_points(user_id, 0, coinz)
+                        await self.bot.db.add_points(user_id, 0, total_coinz)
                         
                         # Check for Donator Rod reward (>= 10k VND)
                         if amount >= 10000:
@@ -84,14 +97,20 @@ class Donation(commands.Cog):
                     # Notify User
                     try:
                         user = await self.bot.fetch_user(user_id)
+                        
+                        desc = (
+                            f"Cảm ơn bạn đã ủng hộ!\n"
+                            f"Đơn hàng: `{txn_id}`\n"
+                            f"Nội dung: `{order_code}`\n"
+                            f"Số nhận: **{total_coinz:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}"
+                        )
+                        
+                        if bonus_coinz > 0:
+                            desc += f"\n*(Gốc: {base_coinz:,} + Bonus: {bonus_coinz:,})*"
+                            
                         embed = discord.Embed(
                             title="✅ THANH TOÁN THÀNH CÔNG",
-                            description=(
-                                f"Cảm ơn bạn đã ủng hộ!\n"
-                                f"Đơn hàng: `{txn_id}`\n"
-                                f"Nội dung: `{order_code}`\n"
-                                f"Số nhận: **{coinz:,} Coinz** {emojis.ANIMATED_EMOJI_COINZ}"
-                            ),
+                            description=desc,
                             color=config.COLOR_SUCCESS
                         )
                         await user.send(embed=embed)
