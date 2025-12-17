@@ -929,10 +929,21 @@ class CauCaCog(commands.Cog):
         
         # 3. Bait Check
         if not stats.get("current_bait"):
-             msg = f"❌ Bạn chưa trang bị mồi câu! Hãy vào `/shop` để mua Mồi Giun và dùng `/inventory` để trang bị."
-             try: await interaction.response.send_message(msg, ephemeral=True)
-             except: await interaction.followup.send(msg, ephemeral=True)
-             return
+             # Check if user has any bait in inventory
+             baits_inv = inventory.get("baits", {})
+             has_bait = any(c > 0 for c in baits_inv.values())
+             
+             if has_bait:
+                 msg = "⚠️ Bạn chưa trang bị mồi câu! Vui lòng chọn mồi bên dưới để bắt đầu:"
+                 view_bait = ChangeBaitView(self, user_id, baits_inv, view)
+                 try: await interaction.response.send_message(msg, view=view_bait, ephemeral=True)
+                 except: await interaction.followup.send(msg, view=view_bait, ephemeral=True)
+                 return
+             else:
+                 msg = f"❌ Bạn chưa có mồi câu nào! Hãy vào `/shop` để mua Mồi Giun."
+                 try: await interaction.response.send_message(msg, ephemeral=True)
+                 except: await interaction.followup.send(msg, ephemeral=True)
+                 return
         
         # Get Stats (Power/Luck)
         power, luck, data, current_bait_key = await self.get_stats_multiplier(user_id)
