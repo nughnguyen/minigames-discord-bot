@@ -1066,8 +1066,9 @@ class CauCaCog(commands.Cog):
                  stats["current_bait"] = None
                  is_magnet = False
 
-        # Treasure Chance (2% + Luck/50)
-        treasure_chance = 2 + (luck * 0.05)
+        # Treasure Chance (Capped at 15% max, reduced scaling 0.002)
+        # Fixes the issue where high Luck means 100% Treasure rate.
+        treasure_chance = min(15, 2 + (luck * 0.002))
         treasure_found = False
         
         result_list = []
@@ -1089,27 +1090,28 @@ class CauCaCog(commands.Cog):
             chest_idx = min(len(TREASURES)-1, int(random.triangular(0, len(TREASURES)-1, 0 + luck/50)))
             chest = TREASURES[chest_idx]
             
-            # Loot Type: Coinz (35%), Fish (35%), Bait (20%), Charm (10%)
-            loot_type = random.choices(["coiz", "fish", "bait", "charm"], weights=[35, 35, 20, 10], k=1)[0]
+            # Loot Logic: Can receive MULTIPLE types of rewards
             reward_msg = ""
+            rewards_list = []
             
-            if loot_type == "coiz":
-                amount = int(chest["value"] * random.uniform(0.8, 1.5))
-                # Update lifetime money? No, this is direct money.
-                current_lt = stats.get("lifetime_money", 0)
-                stats["lifetime_money"] = current_lt + amount
-                
-                await self.db.add_points(user_id, interaction.guild_id, amount)
-                reward_msg = f"Bạn nhận được **{amount:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ} từ rương!"
-                
-            elif loot_type == "fish":
+            # 1. Coinz (Always)
+            amount = int(chest["value"] * random.uniform(2.0, 5.0))
+            await self.db.add_points(user_id, interaction.guild_id, amount)
+            current_lt = stats.get("lifetime_money", 0)
+            stats["lifetime_money"] = current_lt + amount
+            rewards_list.append(f"• **{amount:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}")
+            
+            # 2. Fish (50% Chance)
+            if random.random() < 0.5:
+                # Weights based on luck/rarity logic or just simple pool
                 weights = [f.get("spawn_rate", 10) for f in fish_pool]
                 selected_fish = random.choices(fish_pool, weights=weights, k=1)[0]
-                min_qty = 1 + chest_idx
-                max_qty = 3 + (chest_idx * 2)
+                
+                min_qty = 3 + (chest_idx * 2)
+                max_qty = 10 + (chest_idx * 5)
                 quantity = random.randint(min_qty, max_qty)
                 
-                unit_value = int(selected_fish['base_value'] * 1.2)
+                unit_value = int(selected_fish['base_value'] * 1.5)
                 total_f_val = unit_value * quantity
                 
                 if 'fish' not in inventory: inventory['fish'] = {}
@@ -1119,11 +1121,12 @@ class CauCaCog(commands.Cog):
                 
                 inventory['fish'][f_name]["count"] += quantity
                 inventory['fish'][f_name]["total_value"] += total_f_val
-                
                 stats["total_caught"] = stats.get("total_caught", 0) + quantity
-                reward_msg = f"Bạn nhận được **{quantity}x {selected_fish['emoji']} {selected_fish['name']}** từ rương!"
                 
-            elif loot_type == "bait":
+                rewards_list.append(f"• **{quantity}x {selected_fish['emoji']} {selected_fish['name']}**")
+
+            # 3. Bait (35% Chance)
+            if random.random() < 0.35:
                  bait_keys = list(BAITS.keys())
                  selected_bait_key = random.choice(bait_keys)
                  selected_bait = BAITS[selected_bait_key]
@@ -1134,10 +1137,10 @@ class CauCaCog(commands.Cog):
                  
                  if 'baits' not in inventory: inventory['baits'] = {}
                  inventory['baits'][selected_bait_key] = inventory['baits'].get(selected_bait_key, 0) + quantity
-                 
-                 reward_msg = f"Bạn nhận được **{quantity}x {selected_bait['emoji']} {selected_bait['name']}** từ rương!"
+                 rewards_list.append(f"• **{quantity}x {selected_bait['emoji']} {selected_bait['name']}**")
 
-            elif loot_type == "charm":
+            # 4. Charm (15% Chance)
+            if random.random() < 0.15:
                 charm_keys = list(CHARMS.keys())
                 c_key = random.choice(charm_keys)
                 c_info = CHARMS[c_key]
@@ -1145,17 +1148,14 @@ class CauCaCog(commands.Cog):
                 duration_min = c_info["duration_min"]
                 duration_max = c_info["duration_max"]
                 duration_sec = random.randint(duration_min * 60, duration_max * 60)
-                
-                if "charms" not in inventory: inventory["charms"] = []
-                new_charm = {"key": c_key, "duration": duration_sec, "name": c_info["name"]}
-                inventory["charms"].append(new_charm)
-                
-                if "charms" not in inventory: inventory["charms"] = []
-                new_charm = {"key": c_key, "duration": duration_sec, "name": c_info["name"]}
-                inventory["charms"].append(new_charm)
-                
                 minutes = duration_sec // 60
-                reward_msg = f"Bạn nhận được **{c_info['emoji']} {c_info['name']}** ({minutes}p) từ rương!"
+                
+                if "charms" not in inventory: inventory["charms"] = []
+                new_charm = {"key": c_key, "duration": duration_sec, "name": c_info["name"]}
+                inventory["charms"].append(new_charm)
+                rewards_list.append(f"• **{c_info['emoji']} {c_info['name']}** ({minutes}p)")
+            
+            reward_msg = "\n".join(rewards_list)
 
             # DRAGON BALL DROP CHANCE
             # 0.5% chance from any chest to get a random Dragon Ball
