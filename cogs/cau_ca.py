@@ -719,7 +719,7 @@ class InventorySelect(discord.ui.Select):
                     remaining = len(fish_list) - 15
                     fish_text = "\n".join(lines) + f"\n... và {remaining} loại cá khác"
                 
-                embed.add_field(name=f"🐟 Cá: {total_count} con ({total_val:,} Coinz)", value=fish_text, inline=False)
+                embed.add_field(name=f"🐟 Cá: {total_count} con ({total_val:,} Coiz)", value=fish_text, inline=False)
             else:
                 embed.description = "Thùng cá trống rỗng."
 
@@ -1103,7 +1103,7 @@ class CauCaCog(commands.Cog):
             await self.db.add_points(user_id, interaction.guild_id, amount)
             current_lt = stats.get("lifetime_money", 0)
             stats["lifetime_money"] = current_lt + amount
-            rewards_list.append(f"• **{amount:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}")
+            rewards_list.append(f"• **{amount:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}")
             
             # 2. Fish (50% Chance)
             if random.random() < 0.5:
@@ -1152,19 +1152,29 @@ class CauCaCog(commands.Cog):
 
             # DRAGON BALL DROP CHANCE (0.5%)
             if random.random() < 0.005: 
-                ball_num = random.randint(1, 7)
                 user_balls = inventory.get("dragon_balls", [])
+                missing_balls = [i for i in range(1, 8) if i not in user_balls]
+                
+                # Smart RNG: 80% to find a New Ball, 20% to find Random (potential duplicate)
+                if missing_balls and random.random() < 0.8:
+                    ball_num = random.choice(missing_balls)
+                else:
+                    ball_num = random.randint(1, 7)
+
+                ball_emoji = DRAGON_BALLS[ball_num]["emoji"]
+
                 if ball_num not in user_balls:
                      user_balls.append(ball_num)
                      user_balls.sort()
                      inventory["dragon_balls"] = user_balls
-                     ball_emoji = DRAGON_BALLS[ball_num]["emoji"]
+                     
                      treasure_embed_desc += f"\n\n🔥 **HUYỀN THOẠI!** Bạn đã tìm thấy **Ngọc Rồng {ball_num} Sao** {ball_emoji}! ({len(user_balls)}/7)"
                      if len(user_balls) == 7:
                          treasure_embed_desc += f"\n🐲 **BẠN ĐÃ CÓ ĐỦ 7 VIÊN NGỌC RỒNG!** Hãy dùng lệnh `/goi-rong` để triệu hồi Rồng Thần!"
                 else:
-                     treasure_embed_desc += f"\n\n🔸 Bạn tìm thấy Ngọc Rồng {ball_num} Sao, nhưng đã sở hữu rồi. (Nhận 100k Coiz an ủi)"
-                     await self.db.add_points(user_id, interaction.guild_id, 100000)
+                     # Duplicate Reward
+                     treasure_embed_desc += f"\n\n🔸 Bạn tìm thấy **Ngọc Rồng {ball_num} Sao** {ball_emoji}, nhưng đã sở hữu rồi. (Nhận 100M Coiz an ủi)"
+                     await self.db.add_points(user_id, interaction.guild_id, 100000000)
 
         # FISHING LOOP (ALWAYS RUNS)
         desc_lines = []
@@ -1354,7 +1364,7 @@ class CauCaCog(commands.Cog):
         
         embed = discord.Embed(title=title, color=embed_color)
         embed.description = "\n".join(desc_lines)
-        embed.add_field(name="Tổng kết", value=f"Exp: +{total_xp} | Giá trị: {total_val:,} Coinz {emojis.ANIMATED_EMOJI_COIZ}{rod_broken_msg}")
+        embed.add_field(name="Tổng kết", value=f"Exp: +{total_xp} | Giá trị: {total_val:,} Coiz {emojis.ANIMATED_EMOJI_COIZ}{rod_broken_msg}")
         
         dura_info = ""
         if user_dura is not None:
@@ -1540,7 +1550,7 @@ class CauCaCog(commands.Cog):
             # User mentioned price for 1 bait
             embed.add_field(
                 name=f"{info['emoji']} {info['name']}",
-                value=f"� Giá: **{info['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}/cái\n�💪 Power: +{info['power']} | 🍀 Luck: +{info['luck']}\n*{info['desc']}*",
+                value=f"💰 Giá: **{info['price']:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}/cái\n💪 Power: +{info['power']} | 🍀 Luck: +{info['luck']}\n*{info['desc']}*",
                 inline=False
             )
             
@@ -1577,7 +1587,7 @@ class CauCaCog(commands.Cog):
                 user_point = await self.db.get_player_points(interaction.user.id, interaction.guild_id)
                 
                 if user_point < cost:
-                    await interaction.response.send_message(f"❌ Bạn không đủ **{cost:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ} để mua {qty}x {self.bait_info['name']}!", ephemeral=True)
+                    await interaction.response.send_message(f"❌ Bạn không đủ **{cost:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ} để mua {qty}x {self.bait_info['name']}!", ephemeral=True)
                     return
                 
                 # Proceed Transaction
@@ -1596,7 +1606,7 @@ class CauCaCog(commands.Cog):
                 
                 await self.db.update_fishing_data(interaction.user.id, inventory=inv, stats=stats)
                 
-                await interaction.response.send_message(f"✅ Đã mua thành công **{qty}x {self.bait_info['emoji']} {self.bait_info['name']}** với giá **{cost:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}!", ephemeral=True)
+                await interaction.response.send_message(f"✅ Đã mua thành công **{qty}x {self.bait_info['emoji']} {self.bait_info['name']}** với giá **{cost:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}!", ephemeral=True)
 
         async def bait_button_callback(interaction: discord.Interaction):
             # Hacky way to get the button that was clicked
@@ -1645,7 +1655,7 @@ class CauCaCog(commands.Cog):
                 buyable_rods.append((key, info))
                 embed.add_field(
                     name=f"{info['emoji']} {info['name']}",
-                    value=f"💰 Giá: **{info['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}\n💪 Power: {info['power']} | 🍀 Luck: {info['luck']} | 🔧 Độ bền: {info['durability']}",
+                    value=f"💰 Giá: **{info['price']:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}\n💪 Power: {info['power']} | 🍀 Luck: {info['luck']} | 🔧 Độ bền: {info['durability']}",
                     inline=False
                 )
         
@@ -1737,7 +1747,7 @@ class CauCaCog(commands.Cog):
                 # Trigger Confirmation
                 confirm_view = ConfirmBuyView(k, i, self.db, inter)
                 await inter.response.send_message(
-                    f"Bạn có chắc muốn mua **{i['emoji']} {i['name']}** với giá **{i['price']:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ} không?",
+                    f"Bạn có chắc muốn mua **{i['emoji']} {i['name']}** với giá **{i['price']:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ} không?",
                     view=confirm_view,
                     ephemeral=True
                 )
@@ -1854,7 +1864,7 @@ class CauCaCog(commands.Cog):
                     await self.db.update_fishing_data(inter.user.id, inventory=inventory)
                     
                     # Announcement Embed
-                    embed = discord.Embed(title="🐲 RỒNG THẦN ĐÃ XUẤT HIỆN!", description=f"**{inter.user.name}** đã tập hợp đủ 7 viên ngọc rồng và triệu hồi Rồng Thần!\n\n🌌 **ĐIỀU ƯỚC ĐÃ ĐƯỢC THỰC HIỆN:**\nNgười chơi nhận được **{amount_req:,}** Coinz {emojis.ANIMATED_EMOJI_COIZ}!", color=discord.Color.dark_green())
+                    embed = discord.Embed(title="🐲 RỒNG THẦN ĐÃ XUẤT HIỆN!", description=f"**{inter.user.name}** đã tập hợp đủ 7 viên ngọc rồng và triệu hồi Rồng Thần!\n\n🌌 **ĐIỀU ƯỚC ĐÃ ĐƯỢC THỰC HIỆN:**\nNgười chơi nhận được **{amount_req:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}!", color=discord.Color.dark_green())
                     embed.set_image(url="https://cdn.discordapp.com/attachments/1305556786304127097/1451098687999578224/tenor.gif?ex=6944f077&is=69439ef7&hm=e0b76ba5377dbe0153382c5fde7b02c008ab0f5631fb0d7a46366e38dbf6ceea&") # Shenron GIF placeholder or emoji
                     embed.set_thumbnail(url=inter.user.avatar.url if inter.user.avatar else None)
                     
