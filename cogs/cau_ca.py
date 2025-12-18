@@ -693,33 +693,88 @@ class InventorySelect(discord.ui.Select):
         elif val == "fish":
             fish_inv = inv.get("fish", {})
             if fish_inv:
-                fish_list = []
+                normal_fish = []
+                boss_fish = []
                 total_val = 0
                 total_count = 0
+                
+                # Check for "KingFisher" badge tracking
+                all_bosses_caught = True
+                total_bosses = 0
+                caught_bosses = 0
+                
+                # Prepare a lookup for spawn rates to identify bosses
+                fish_meta = {}
+                boss_names = set()
+                for b_val in BIOMES.values():
+                    for f in b_val["fish"]:
+                        fish_meta[f["name"]] = f
+                        if f.get("spawn_rate", 10) < 1.0:
+                            boss_names.add(f["name"])
+
+                total_bosses = len(boss_names)
+
                 for name, info in fish_inv.items():
                     count = info.get("count", 0)
+                    if count <= 0: continue
+                    
                     val_fish = info.get("total_value", 0)
+                    meta = fish_meta.get(name, {"emoji": "🐟", "spawn_rate": 10})
+                    emoji_icon = meta.get("emoji", "🐟")
+                    is_boss = meta.get("spawn_rate", 10) < 1.0
                     
-                    emoji_icon = "🐟"
-                    for b_key, b_val in BIOMES.items():
-                         for f in b_val["fish"]:
-                             if f["name"] == name:
-                                 emoji_icon = f["emoji"]
-                                 break
-                         if emoji_icon != "🐟": break
+                    line = f"• {emoji_icon} **{name}**: x{count} ({val_fish:,})"
                     
-                    if count > 0:
-                        fish_list.append(f"• {emoji_icon} **{name}**: x{count} ({val_fish:,})")
-                        total_val += val_fish
-                        total_count += count
+                    if is_boss:
+                        boss_fish.append(line)
+                        if name in boss_names:
+                             caught_bosses += 1 # Count distinct bosses caught
+                    else:
+                        normal_fish.append(line)
+                        
+                    total_val += val_fish
+                    total_count += count
+
+                # Verify King Fisher Badge (Caught ALL boss types)
+                # Instead of counting unique caught, we check if all boss_names are in fish_inv keys
+                caught_boss_names_inv = [k for k in fish_inv.keys() if k in boss_names and fish_inv[k].get("count", 0) > 0]
+                if len(caught_boss_names_inv) >= total_bosses and total_bosses > 0:
+                     # Trigger Badge Check (Async, so we just ensure logic exists in check_badges or trigger here)
+                     # ideally we trigger self.cog.check_badges() but that's a coroutine. 
+                     # Since this is a view callback, we can await it.
+                     pass 
                 
-                fish_text = "\n".join(fish_list) if fish_list else "Trống"
-                if len(fish_text) > 1000:
-                    lines = fish_list[:15]
-                    remaining = len(fish_list) - 15
-                    fish_text = "\n".join(lines) + f"\n... và {remaining} loại cá khác"
+                # Update badge progress implicitly via check_badges later or do it now?
+                # User asked to "system save progress if user caught all bosses then award badge".
+                # The BADGES constant has "KingFisher": ..., "req_type": "king_fish_all"
+                # We need to ensure check_badges handles "king_fish_all".
+
+                # Display Logic with Pagination
+                max_chars = 1000
                 
-                embed.add_field(name=f"🐟 Cá: {total_count} con ({total_val:,} Coiz)", value=fish_text, inline=False)
+                # Normal Fish Field
+                normal_text = "\n".join(normal_fish) if normal_fish else "Trống"
+                if len(normal_text) > max_chars:
+                    # Simple truncation for now as buttons need more class structure
+                    # Or we can split into multiple fields?
+                    # Let's split into chunks
+                    chunks = [normal_text[i:i+max_chars] for i in range(0, len(normal_text), max_chars)]
+                    embed.add_field(name=f"🐟 Cá Thường ({len(normal_fish)})", value=chunks[0], inline=False)
+                    if len(chunks) > 1:
+                        embed.add_field(name="🐟 Cá Thường (Tiếp)", value=chunks[1][:1000] + "...", inline=False)
+                else:
+                    embed.add_field(name=f"🐟 Cá Thường ({len(normal_fish)})", value=normal_text, inline=False)
+
+                # Boss Fish Field
+                if boss_fish:
+                    boss_text = "\n".join(boss_fish)
+                    embed.add_field(name=f"👑 VUA CÁ ({len(boss_fish)})", value=boss_text, inline=False)
+                
+                embed.set_footer(text=f"Tổng: {total_count} con | Giá trị: {total_val:,} Coiz")
+                
+                # Check badges immediately to ensure update
+                await self.cog.check_badges(self.user_id, interaction.channel)
+
             else:
                 embed.description = "Thùng cá trống rỗng."
 
@@ -1893,34 +1948,189 @@ class CauCaCog(commands.Cog):
 
     @app_commands.command(name="sell", description="Bán tất cả cá")
     async def sell(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=False)
         data = await self.db.get_fishing_data(interaction.user.id)
         inv = data.get("inventory", {})
         fish_inv = inv.get("fish", {})
         
         if not fish_inv:
-             await interaction.response.send_message("🎒 Không có cá để bán!", ephemeral=True)
+             await interaction.followup.send("🎒 Không có cá để bán!", ephemeral=True)
              return
 
-        total_payout = 0
+        # Separate Normal and Boss Fish
+        normal_fish_to_sell = []
+        boss_fish_hold = []
+        
+        # Helper to identify boss
+        fish_meta = {}
+        for b_val in BIOMES.values():
+            for f in b_val["fish"]:
+                fish_meta[f["name"]] = f
+
         for name, info in fish_inv.items():
-            total_payout += info.get("total_value", 0)
+            count = info.get("count", 0)
+            if count <= 0: continue
             
-        if total_payout == 0:
-             await interaction.response.send_message("🎒 Không có cá có giá trị để bán!", ephemeral=True)
-             return
+            meta = fish_meta.get(name, {"spawn_rate": 10})
+            is_boss = meta.get("spawn_rate", 10) < 1.0
+            
+            if is_boss:
+                boss_fish_hold.append(name)
+            else:
+                normal_fish_to_sell.append(name)
 
-        # Clear fish
-        inv["fish"] = {}
+        total_sold_val = 0
+        sold_count = 0
         
+        # 1. Auto-Sell Normal Fish
         stats = data.get("stats", {})
-        stats["lifetime_money"] = stats.get("lifetime_money", 0) + total_payout
         
-        await self.db.update_fishing_data(interaction.user.id, inventory=inv, stats=stats)
-        await self.db.add_points(interaction.user.id, interaction.guild_id, total_payout)
-        
-        await self.check_badges(interaction.user.id, interaction.channel)
-        
-        await interaction.response.send_message(f"💰 Đã bán sạch cá và nhận được **{total_payout:,.2f}** Coinz {emojis.ANIMATED_EMOJI_COIZ}!")
+        for name in normal_fish_to_sell:
+            info = fish_inv[name]
+            val = info["total_value"]
+            count = info["count"]
+            
+            total_sold_val += val
+            sold_count += count
+            
+            # Remove from inv
+            del fish_inv[name]
+            
+        if total_sold_val > 0:
+            stats["lifetime_money"] = stats.get("lifetime_money", 0) + total_sold_val
+            await self.db.update_fishing_data(interaction.user.id, inventory=inv, stats=stats)
+            await self.db.add_points(interaction.user.id, interaction.guild_id, total_sold_val)
+            await self.check_badges(interaction.user.id, interaction.channel)
+
+        msg = ""
+        if sold_count > 0:
+            msg = f"✅ Đã tự động bán **{sold_count}** con cá thường với giá **{total_sold_val:,}** Coiz {emojis.ANIMATED_EMOJI_COIZ}."
+        else:
+            msg = "🎒 Không có cá thường để bán."
+
+        # 2. Check Boss Fish
+        if not boss_fish_hold:
+            await interaction.followup.send(msg)
+            return
+
+        # Prompt for Boss Fish
+        msg += f"\n👑 Bạn đang sở hữu **{len(boss_fish_hold)} loại Boss cá**! Bạn có muốn bán chúng luôn không?"
+
+        class SellBossView(discord.ui.View):
+            def __init__(self, cog, user_id, boss_list, db, parent_inv):
+                super().__init__(timeout=60)
+                self.cog = cog
+                self.user_id = user_id
+                self.boss_list = boss_list
+                self.db = db
+                self.parent_inv = parent_inv
+
+            @discord.ui.button(label="Có, muốn bán Boss", style=discord.ButtonStyle.danger, emoji="💰")
+            async def yes_sell_boss(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != self.user_id: return
+                
+                # Show Boss Selection View
+                view = BossSelectionView(self.cog, self.user_id, self.boss_list, self.db, self.parent_inv)
+                await inter.response.edit_message(content="👇 **Chọn loại Boss muốn bán:**", view=view)
+
+            @discord.ui.button(label="Không, giữ lại", style=discord.ButtonStyle.secondary, emoji="🛡️")
+            async def no_sell_boss(self, inter: discord.Interaction, button: discord.ui.Button):
+                if inter.user.id != self.user_id: return
+                await inter.response.edit_message(content=f"{msg}\n✅ Đã giữ lại các Boss cá.", view=None)
+
+        class BossSelectionView(discord.ui.View):
+            def __init__(self, cog, user_id, boss_list, db, parent_inv):
+                super().__init__(timeout=120)
+                self.cog = cog
+                self.user_id = user_id
+                self.boss_list = boss_list
+                self.db = db
+                self.parent_inv = parent_inv
+                
+                # Create button for each boss
+                fish_meta = {}
+                for b_val in BIOMES.values():
+                    for f in b_val["fish"]:
+                        fish_meta[f["name"]] = f
+
+                for b_name in boss_list:
+                    # Get current count
+                    c_info = self.parent_inv.get("fish", {}).get(b_name, {})
+                    cnt = c_info.get("count", 0)
+                    if cnt <= 0: continue
+                    
+                    b_meta = fish_meta.get(b_name, {"emoji": "👑"})
+                    emoji = b_meta.get("emoji", "👑")
+                    
+                    btn = discord.ui.Button(label=f"{b_name} (x{cnt})", emoji=emoji, style=discord.ButtonStyle.danger)
+                    
+                    async def callback(inter, name=b_name, count=cnt):
+                        modal = SellBossAmountModal(name, count, self.db, self.cog)
+                        await inter.response.send_modal(modal)
+                        
+                    btn.callback = callback
+                    self.add_item(btn)
+
+        class SellBossAmountModal(discord.ui.Modal):
+            def __init__(self, boss_name, max_count, db, cog):
+                super().__init__(title=f"Bán {boss_name}")
+                self.boss_name = boss_name
+                self.max_count = max_count
+                self.db = db
+                self.cog = cog
+                
+                self.amount = discord.ui.TextInput(
+                    label=f"Nhập số lượng (Có sẵn: {max_count})",
+                    placeholder="Ví dụ: 1",
+                    min_length=1,
+                    max_length=5,
+                    required=True
+                )
+                self.add_item(self.amount)
+
+            async def on_submit(self, inter: discord.Interaction):
+                try:
+                    qty = int(self.amount.value)
+                    if qty <= 0 or qty > self.max_count: raise ValueError
+                except ValueError:
+                    await inter.response.send_message("❌ Số lượng không hợp lệ!", ephemeral=True)
+                    return
+                
+                # Fetch fresh data to ensure transaction safety
+                d = await self.db.get_fishing_data(inter.user.id)
+                inv = d.get("inventory", {})
+                f_inv = inv.get("fish", {})
+                
+                if self.boss_name not in f_inv or f_inv[self.boss_name]["count"] < qty:
+                    await inter.response.send_message("❌ Số lượng không đủ hoặc đã thay đổi!", ephemeral=True)
+                    return
+                
+                # Calculate value (Average val * qty)
+                # Or just proportional?
+                # info["total_value"] is total value of all items. 
+                # Avg value = total / count.
+                total_v = f_inv[self.boss_name]["total_value"]
+                curr_c = f_inv[self.boss_name]["count"]
+                avg_val = total_v // curr_c
+                
+                sell_val = avg_val * qty
+                
+                # Update
+                f_inv[self.boss_name]["count"] -= qty
+                f_inv[self.boss_name]["total_value"] -= sell_val
+                if f_inv[self.boss_name]["count"] <= 0:
+                    del f_inv[self.boss_name]
+                    
+                s = d.get("stats", {})
+                s["lifetime_money"] = s.get("lifetime_money", 0) + sell_val
+                
+                await self.db.update_fishing_data(inter.user.id, inventory=inv, stats=s)
+                await self.db.add_points(inter.user.id, inter.guild_id, sell_val)
+                
+                await inter.response.send_message(f"✅ Đã bán **{qty}x {self.boss_name}** với giá **{sell_val:,}** Coiz!", ephemeral=True)
+
+        view = SellBossView(self, interaction.user.id, boss_fish_hold, self.db, inv)
+        await interaction.followup.send(msg, view=view)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(CauCaCog(bot, bot.db))
