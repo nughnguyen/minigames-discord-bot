@@ -1380,7 +1380,7 @@ class CauCaCog(commands.Cog):
         # Loop incase of multi-level up
         leveled_up = False
         while True:
-            req_xp = int(1000 * (1.5 ** (current_level - 1)))
+            req_xp = int(1000 * (1.35 ** (current_level - 1)))
             if current_xp >= req_xp:
                 current_xp -= req_xp
                 current_level += 1
@@ -1401,7 +1401,7 @@ class CauCaCog(commands.Cog):
             max_dura = RODS[rod_key]['durability']
             dura_info = f" | Độ bền: {max(0, user_dura)}/{max_dura}"
             
-        req_xp_next = int(1000 * (1.5 ** (current_level - 1)))
+        req_xp_next = int(1000 * (1.35 ** (current_level - 1)))
         embed.set_footer(text=f"Level: {current_level} | XP: {current_xp}/{req_xp_next}{dura_info}")
 
         # Save Data
@@ -1786,7 +1786,7 @@ class CauCaCog(commands.Cog):
         
         level = stats.get("level", 1)
         xp = stats.get("xp", 0)
-        req_xp = int(1000 * (1.5 ** (level - 1)))
+        req_xp = int(1000 * (1.35 ** (level - 1)))
         
         # Calculate Rank
         rank = await self.db.get_fishing_rank(user_id)
