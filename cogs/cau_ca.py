@@ -1401,8 +1401,13 @@ class CauCaCog(commands.Cog):
         new_view = FishingView(self, user_id, biome_name, last_catch=last_catch_data)
         
         if view:
-             new_view.message = view.message
-             await view.message.edit(embed=embed, view=new_view)
+             # Stop the old view to disable buttons on previous message
+             view.stop()
+             # We send a NEW message, not edit the old one.
+             await interaction.followup.send(embed=embed, view=new_view)
+             # Note: We don't store new_view.message here immediately because followup.send returns a webhook message object
+             # which is fine, but if we need to edit it later, it works similarly.
+             # Ideally we keep track if we want to support 'view.message' usage elsewhere.
         else:
              msg = await interaction.followup.send(embed=embed, view=new_view)
              new_view.message = msg
