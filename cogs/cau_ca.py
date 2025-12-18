@@ -1179,7 +1179,10 @@ class CauCaCog(commands.Cog):
         # FISHING LOOP (ALWAYS RUNS)
         desc_lines = []
         if treasure_found:
-             desc_lines.append(f"🎁 **KHO BÁU TÌM THẤY!**\n{treasure_embed_desc}\n\n🎣 **KẾT QUẢ CÂU:**")
+             desc_lines.append(f"🌟 **---------------- KHO BÁU XUẤT HIỆN ----------------** 🌟")
+             desc_lines.append(f"{treasure_embed_desc}")
+             desc_lines.append(f"🌟 **-------------------------------------------------------** 🌟\n")
+             desc_lines.append(f"🎣 **KẾT QUẢ CÂU:**")
 
         for _ in range(loops):
             # Calculate current catch stats (handles Magnet Sub-Bait)
@@ -1243,12 +1246,12 @@ class CauCaCog(commands.Cog):
                  base_rate = f.get("spawn_rate", 10)
                  
                  if base_rate < 1.0:
-                      # BOSS FISH BUFF (King/Queen)
-                      # Base rates are like 0.01, 0.05. We pump them significantly.
-                      # New Weight = Base * 50 * (1 + Luck/200)
-                      # Example: Rate 0.01, Luck 0 => Weight 0.5 (Still rare vs 35, but 50x better)
-                      # Example: Rate 0.01, Luck 1000 => Weight 0.5 * 6 = 3.0 (Comparable to uncommon 30/10)
-                      w = base_rate * 50 * (1 + (eff_luck * 0.005)) 
+                      # BOSS FISH: FIXED RATE (No Luck Influence)
+                      # Used to be boosted by luck, now requested to be fixed.
+                      # We still need a slight multiplier from base because base_rate (e.g. 0.01) is purely theoretical relative to 100.
+                      # If Common is 35, and Boss is 0.01, Boss is 3500x rarer.
+                      # Let's keep a small static multiplier to make it distinct but rare.
+                      w = base_rate * 5 # Static boost, no luck scaling.
                  elif base_rate <= 20: 
                       # Boost rare fish: +0.2% weight per 1 Luck
                       w = base_rate * (1 + (eff_luck * 0.002))
