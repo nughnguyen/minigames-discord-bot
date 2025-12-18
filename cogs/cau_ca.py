@@ -1238,16 +1238,22 @@ class CauCaCog(commands.Cog):
             if not fish_pool: break
             
             # Apply weight selection based on 'spawn_rate' modified by Luck
-            # Strategy: If spawn_rate is low (rare fish), Luck boosts its weight more significantly.
             weights = []
             for f in fish_pool:
                  base_rate = f.get("spawn_rate", 10)
-                 if base_rate <= 20: 
-                      # Boost rare fish: +0.1% weight per 1 Luck (Reduced further)
-                      # Example: Luck 1000 => +100% chance (2x) - Very hard scaling
-                      w = base_rate * (1 + (eff_luck * 0.001))
+                 
+                 if base_rate < 1.0:
+                      # BOSS FISH BUFF (King/Queen)
+                      # Base rates are like 0.01, 0.05. We pump them significantly.
+                      # New Weight = Base * 50 * (1 + Luck/200)
+                      # Example: Rate 0.01, Luck 0 => Weight 0.5 (Still rare vs 35, but 50x better)
+                      # Example: Rate 0.01, Luck 1000 => Weight 0.5 * 6 = 3.0 (Comparable to uncommon 30/10)
+                      w = base_rate * 50 * (1 + (eff_luck * 0.005)) 
+                 elif base_rate <= 20: 
+                      # Boost rare fish: +0.2% weight per 1 Luck
+                      w = base_rate * (1 + (eff_luck * 0.002))
                  else:
-                      # Common fish: Slight boost or neutral
+                      # Common fish
                       w = base_rate
                  weights.append(w)
                  
@@ -1309,10 +1315,7 @@ class CauCaCog(commands.Cog):
             stats["total_caught"] = stats.get("total_caught", 0) + 1
             total_val += val
                 
-            # XP Calculation: Scales with Value (Size & Rarity included) but boosted further
-            # Base Logic: 100 Coin Value = 1 XP. 
-            # New Logic: Boost for high rarity to incentivize catching big rare fish.
-            # Rarity XP Multiplier: Common=1, Uncommon=1.5, Rare=2.5, Epic=5, Legendary=20, Mythical=100
+            # XP Calculation: Scales with Value (Size & Rarity included)
             xp_rarity_mul = {
                 "Common": 1.0, 
                 "Uncommon": 1.2, 
@@ -1323,8 +1326,8 @@ class CauCaCog(commands.Cog):
                 "Exotic": 100.0
             }.get(rarity, 1.0)
             
-            # Formula: Base XP (Value/100) * RarityXP * SizeFactor (implicit in value)
-            xp_gain = int((val / 50) * xp_rarity_mul) # Increased base conversion (val/50 instead of 100)
+            # Formula: Base XP (Value/50) * RarityXP
+            xp_gain = int((val / 50) * xp_rarity_mul) 
             if xp_gain < 10: xp_gain = 10
             
             total_xp += xp_gain
@@ -1339,8 +1342,15 @@ class CauCaCog(commands.Cog):
                 "Epic": "Sử Thi", "Huyền Thoại": "Huyền Thoại", 
                 "Mythical": "Thần Thoại", "Exotic": "Cực Phẩm"
             }.get(rarity, rarity)
-
-            desc_lines.append(f"{r_emoji} **{rarity_vi}** | {selected_fish['emoji']} **{selected_fish['name']}** ({size}cm)")
+            
+            is_boss = selected_fish.get("spawn_rate", 10) < 1.0
+            
+            if is_boss:
+                 desc_lines.append(f"\n🌟 **---------------- VUA CÁ XUẤT HIỆN ----------------** 🌟")
+                 desc_lines.append(f"👑 {r_emoji} **{rarity_vi}** | {selected_fish['emoji']} **{selected_fish['name']}** ({size}cm) - **BOSS**")
+                 desc_lines.append(f"🌟 **-------------------------------------------------------** 🌟\n")
+            else:
+                 desc_lines.append(f"{r_emoji} **{rarity_vi}** | {selected_fish['emoji']} **{selected_fish['name']}** ({size}cm)")
 
         # Check Rod Break Status before creating Embed
         rod_broken_msg = ""
